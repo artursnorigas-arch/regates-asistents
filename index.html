@@ -1,0 +1,1341 @@
+<!doctype html><html lang="lv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="theme-color" content="#000000"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}</style></head><body><title>Regates asistents</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=Saira+Semi+Condensed:wght@500;700&display=swap">
+<style>
+/* Layout: one-screen instrument app — status strip on top, three panels (Starts / Zīme / Iestatījumi), fixed tab bar at the bottom. High contrast for sunlight. */
+:root{
+  --bg:#EEF3F5; --surface:#FFFFFF; --fg:#0A1A22; --muted:#4A5F69; --line:#C6D3D9;
+  --accent:#0050B0; --accent-fg:#FFFFFF;
+  --stbd:#0A7D45; --port:#C8102E; --warn:#A86200; --good:#0A7D45; --bad:#C8102E;
+  --chip:#E2EAEE;
+  --f-num:"Saira Semi Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#061218; --surface:#0D1F28; --fg:#E4F0F3; --muted:#8EA6AF; --line:#22404C;
+  --accent:#4DA3FF; --accent-fg:#04121A; --stbd:#3DD68C; --port:#FF5A6E; --warn:#F2B33D; --good:#3DD68C; --bad:#FF5A6E; --chip:#173341; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#061218; --surface:#0D1F28; --fg:#E4F0F3; --muted:#8EA6AF; --line:#22404C;
+  --accent:#4DA3FF; --accent-fg:#04121A; --stbd:#3DD68C; --port:#FF5A6E; --warn:#F2B33D; --good:#3DD68C; --bad:#FF5A6E; --chip:#173341; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.4;margin:0}
+.wrap{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:8px 96px;display:flex;flex-direction:column;gap:12px}
+.status{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-family:var(--f-num);font-size:15px;color:var(--muted);font-variant-numeric:tabular-nums;padding-block:6px;border-bottom:1px solid var(--line)}
+.status b{color:var(--fg);font-weight:700}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--bad);display:inline-block;margin-right:4px;vertical-align:middle}
+.dot.ok{background:var(--good)} .dot.sim{background:var(--warn)}
+.badge{font-family:var(--f-body);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;background:var(--warn);color:var(--bg);padding:2px 6px;border-radius:3px}
+.panel{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:10px;min-width:0}
+h2{font-family:var(--f-num);font-weight:700;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0}
+.clock{font-family:var(--f-num);font-weight:700;font-size:clamp(72px,24vw,120px);line-height:.95;font-variant-numeric:tabular-nums;text-align:center;letter-spacing:-.01em}
+.clock.urgent{color:var(--bad)}
+.sub{text-align:center;color:var(--muted);font-size:14px}
+.next{font-size:15px;text-align:center;font-weight:600;min-height:1.4em;text-wrap:balance}
+[hidden]{display:none!important}
+.tcorr{margin-top:6px}.tcorr summary{cursor:pointer;font-size:14px;color:var(--mut,#667)}
+.flags{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;min-height:44px}
+.flag{display:flex;align-items:center;gap:6px;background:var(--chip);border-radius:6px;padding:4px 8px 4px 4px;font-size:13px;font-weight:600}
+.flag svg{width:42px;height:28px;display:block;border:1px solid var(--line)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ro{display:flex;flex-direction:column;gap:0;min-width:0}
+.ro .k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.ro .v{font-family:var(--f-num);font-weight:700;font-size:30px;line-height:1.1;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ro .v.big{font-size:44px}
+.ro .u{font-size:13px;color:var(--muted)}
+.good{color:var(--good)} .bad{color:var(--bad)} .warn{color:var(--warn)} .stbd{color:var(--stbd)} .port{color:var(--port)}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+button{font-family:var(--f-body);font-size:15px;font-weight:600;border-radius:8px;border:1px solid var(--line);background:var(--chip);color:var(--fg);padding:12px 14px;min-height:48px;cursor:pointer;flex:1 1 auto}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+button.stbdb{background:var(--stbd);color:var(--bg);border-color:var(--stbd)}
+button.portb{background:var(--port);color:var(--bg);border-color:var(--port)}
+button.danger{color:var(--bad)}
+button.small{min-height:40px;padding:8px 10px;font-size:14px;flex:0 1 auto}
+button:active{transform:translateY(1px)}
+.msg{font-size:15px;font-weight:600;padding:10px 12px;border-radius:6px;background:var(--chip);text-wrap:balance}
+.msg.alert{background:var(--bad);color:var(--bg)}
+canvas{width:100%;height:280px;display:block;border-radius:6px;background:var(--bg);border:1px solid var(--line)}
+.note{font-size:13px;color:var(--muted);margin:0}
+label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);font-weight:600;min-width:0}
+input,select{font:inherit;font-size:16px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px;min-width:0;width:100%;box-sizing:border-box}
+.check{flex-direction:row;align-items:center;gap:10px;font-size:15px;color:var(--fg)}
+.check input{width:22px;height:22px}
+.tabs{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);z-index:5}
+.tabs button{border:0;border-radius:0;background:transparent;color:var(--muted);font-family:var(--f-num);font-size:14px;letter-spacing:.03em;padding-inline:4px;text-transform:uppercase;min-height:60px}
+.tabs button[aria-selected="true"]{color:var(--accent);box-shadow:inset 0 3px 0 var(--accent)}
+.twsrow{align-items:center;gap:10px}.twsrow .k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}.twsv{font-family:var(--f-num);font-weight:700;font-size:30px;min-width:2.2ch;text-align:center;font-variant-numeric:tabular-nums}.twsrow .ro{margin-left:auto;text-align:right}
+textarea{font:inherit;font-size:14px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px;width:100%;box-sizing:border-box}
+.tblwrap{overflow-x:auto}.pol{border-collapse:collapse;font-family:var(--f-num);font-variant-numeric:tabular-nums;font-size:15px;min-width:100%}.pol th,.pol td{padding:4px 8px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}.pol th:first-child,.pol td:first-child{text-align:left;color:var(--muted);font-weight:600}
+.inst{--i-bg:#000;--i-fg:#fff;--i-mut:#8a96a0;--i-seg:#1f2a31;--i-btn:#1a2329;--i-red:#ff4d5e;--i-grn:#38e08c;--i-amb:#ffbf3c;
+  background:var(--i-bg);color:var(--i-fg);border-radius:12px;padding:8px 12px 12px;display:flex;flex-direction:column;gap:4px;
+  height:calc(100dvh - 150px - env(safe-area-inset-bottom,0px) - env(safe-area-inset-top,0px));min-height:460px;box-sizing:border-box;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.inst.day{--i-bg:#fff;--i-fg:#000;--i-mut:#4a5660;--i-seg:#dfe5e8;--i-btn:#e9eef0;--i-red:#c8102e;--i-grn:#077a3e;--i-amb:#a55f00}
+.inav{display:flex;gap:4px}
+.inav button{flex:1;min-height:34px;padding:4px 2px;font-family:var(--f-num);font-size:13px;letter-spacing:.04em;text-transform:uppercase;background:transparent;border:0;color:var(--i-mut);border-bottom:2px solid transparent;border-radius:0}
+.inav button[aria-current="true"]{color:var(--i-fg);border-bottom-color:var(--i-fg)}
+.cell{flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0;overflow:hidden;border-bottom:1px solid var(--i-seg)}
+.il{font-family:var(--f-num);font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:var(--i-mut)}
+.iv{font-family:var(--f-num);font-weight:700;font-variant-numeric:tabular-nums;line-height:.9;text-align:center;white-space:nowrap;font-size:min(27vw,15dvh,170px)}
+.iv.red{color:var(--i-red)} .iv.grn{color:var(--i-grn)} .iv.amb{color:var(--i-amb)}
+.ibar{display:flex;flex-direction:column;gap:4px;padding-block:6px}
+.ibl{display:flex;justify-content:space-between}
+.segs{display:grid;grid-template-columns:repeat(21,1fr);gap:3px;height:30px}
+.segs i{background:var(--i-seg);border-radius:2px}
+.segs i.c{background:var(--i-mut)}
+.segs i.on.l{background:var(--i-red)} .segs i.on.r{background:var(--i-grn)} .segs i.on.n{background:var(--i-fg)}
+.ticks{position:relative;height:16px;font-family:var(--f-num);font-size:12px;color:var(--i-fg);margin-top:3px}.ticks span{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap}.ticks:empty{display:none}
+.ends{display:flex;justify-content:space-between;font-family:var(--f-num);font-size:12px;color:var(--i-mut);letter-spacing:.1em}
+.ibtns{display:grid;grid-template-columns:1fr 1.3fr 1fr;gap:8px}
+.ibtns button{background:var(--i-btn);color:var(--i-fg);border:1px solid var(--i-seg);min-height:62px;font-family:var(--f-num);font-size:22px;letter-spacing:.08em}
+.ibtns button.set{border-color:var(--i-grn);color:var(--i-grn)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{flex:0 0 auto;min-height:38px;padding:4px 12px;font-family:var(--f-num);font-size:17px;font-weight:700}
+.chip.done{opacity:.45}.chip.cur{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.mrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-block:8px}
+.mrow b{font-family:var(--f-num);font-size:22px;min-width:2.2ch}
+.mrow .meta{flex:1 1 110px;min-width:0;font-size:13px;color:var(--muted)}
+.mrow button{flex:0 0 auto;min-height:38px;padding:6px 10px}
+.grid.three .ro .v{font-size:24px}
+details summary{cursor:pointer;font-weight:600;padding-block:6px}
+.ll{display:flex;flex-direction:column;gap:6px}
+.llt{font-size:13px;color:var(--muted);font-weight:600}
+.llrow{display:flex;align-items:center;gap:6px;font-family:var(--f-num);font-size:22px}
+.llrow input{font-family:var(--f-num);font-size:20px;text-align:right}
+.llrow .dd{width:4.2em;flex:0 0 auto}.llrow .mm{flex:1 1 auto;min-width:0}
+.llrow select{width:auto;flex:0 0 auto;font-family:var(--f-num);font-size:18px}
+.llpaste{font-size:14px}
+.llok{font-size:13px;color:var(--muted);min-height:1.2em}
+.steer{flex:1;display:flex;flex-direction:column;min-height:0}
+.steer canvas{flex:1;width:100%;min-height:0;display:block;background:transparent;border:0;border-radius:0;height:auto}
+.sbot{display:grid;grid-template-columns:auto 1fr auto;align-items:end;gap:8px;border-top:1px solid var(--i-seg);padding-top:4px;min-width:0}.sbot>div{min-width:0}.sbot .il{font-size:11px}
+.sb1,.sb2,.sb3{display:flex;flex-direction:column}.sb3{align-items:center;text-align:center}.sb2{text-align:right;align-items:flex-end}
+.sv{font-family:var(--f-num);font-weight:700;font-size:min(22vw,11dvh,120px);line-height:.9;font-variant-numeric:tabular-nums}
+.sv2{font-family:var(--f-num);font-weight:700;font-size:min(9vw,5.5dvh,48px);line-height:1;font-variant-numeric:tabular-nums}
+.ccard{gap:6px}
+.chead{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.chead b{font-family:var(--f-num);font-size:22px}
+.cgap{font-family:var(--f-num);font-weight:700;font-size:48px;line-height:1;font-variant-numeric:tabular-nums}
+.ctr{font-family:var(--f-num);font-size:20px;font-weight:700}
+.arow{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line);padding-block:6px}
+.arow span{flex:1;min-width:0;font-size:14px}.arow button{flex:0 0 auto;min-height:38px;padding:6px 12px}
+.irec{display:flex;align-items:center;justify-content:space-between;gap:8px;font-family:var(--f-num);font-size:16px;color:var(--i-red)}
+.irec button{flex:0 0 auto;min-height:44px;background:var(--i-btn);color:var(--i-red);border:1px solid var(--i-red);font-family:var(--f-num);font-size:18px;letter-spacing:.08em}
+.locked > :not(.lockcard){display:none!important}
+.lockcard{display:none}.locked > .lockcard{display:flex}
+.mrow2{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid var(--line);padding-block:6px;font-size:14px}
+.mrow2 b{font-weight:600}.tag{font-size:12px;font-weight:600;padding:2px 8px;border-radius:10px;background:var(--chip)}.tag.on{background:var(--good);color:var(--bg)}
+.srow{display:flex;justify-content:space-between;align-items:center;gap:8px;border-bottom:1px solid var(--line);padding-block:8px;cursor:pointer}
+.srow span{min-width:0;font-size:14px}.srow.sel{background:var(--chip)}
+.log{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;max-height:320px;overflow:auto;margin:0;padding-left:32px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <div class="status" id="status">
+    <span><span class="dot" id="gpsDot"></span><b id="gpsTxt">GPS…</b></span>
+    <span>SOG <b id="stSog">–</b> kn</span>
+    <span>BSP <b id="stBsp">–</b> kn</span>
+    <span>COG <b id="stCog">–</b>°</span>
+    <span>TWD <b id="stTwd">–</b>°</span>
+    <span class="badge" id="simBadge" hidden>Simulācija</span>
+  </div>
+
+  <!-- EKRĀNS -->
+  <section class="panel" id="p-inst">
+    <div class="inst" id="inst">
+      <div class="inav" id="inav">
+        <button data-s="0" aria-current="true">Starts</button><button data-s="1">Stūre</button><button data-s="2">Ātrums</button><button data-s="3">Zīme</button><button data-s="4">Savs</button>
+      </div>
+      <div class="steer" id="steer" hidden><canvas id="steerCv" aria-label="Stūrēšanas kompass: kurss, vējš, laylines un zīme"></canvas>
+        <div class="sbot"><div class="sb1"><span class="il" id="sSpdL">SOG, kn</span><span class="sv" id="sSpd">–</span></div><div class="sb3"><span class="il">TWA</span><span class="sv2" id="sTwa">–</span><span class="il" id="sTwaT">–</span></div><div class="sb2"><span class="il" id="sTgtL">Mērķis</span><span class="sv2" id="sTgt">–</span><span class="il" id="sPerf">–</span></div></div></div>
+      <div class="cell"><span class="il" id="iL1">–</span><span class="iv" id="iV1">–</span></div>
+      <div class="cell"><span class="il" id="iL2">–</span><span class="iv" id="iV2">–</span></div>
+      <div class="ibar"><div class="il ibl"><span id="iBL">–</span><span id="iBR"></span></div><div class="segs" id="segs"></div><div class="ticks" id="ticks"></div><div class="ends" id="ends"></div></div>
+      <div class="ibtns" id="ibtns">
+        <button id="iPin">PIN</button><button id="iGun">SĀKT</button><button id="iRC">RC</button>
+      </div>
+      <div class="irec" id="irec" hidden><span id="recTxt">● Ieraksts</span><button id="iStop">STOP</button></div>
+    </div>
+    <div class="panel" id="startExtras">
+    <div class="card" hidden>
+      <h2 id="clkLabel" hidden>Starta procedūra</h2>
+      <div class="clock" id="clock" hidden>5:00</div>
+      <div class="sub" id="clkSub">5-4-1-0 · RRS 26</div>
+      <div class="flags" id="flags"></div>
+      <div class="next" id="nextSig">Nospied pogu tieši signāla brīdī.</div>
+      <div class="row" id="rowIdle">
+        <button class="primary" data-m="5" id="bSig1">Signāls tagad = 5:00</button>
+      </div>
+      <div class="row" id="rowRun" hidden>
+        <button class="primary" id="bSync">Sinhr. — nākamā minūte uz leju</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Komitejas signāli</h2>
+      <div class="row">
+        <button class="small" id="bAP">AP atlikt</button>
+        <button class="small" id="bX">X individuālā</button>
+        <button class="small" id="bFS">1. aizst. vispārējā</button>
+        <button class="small danger" id="bStop">Apturēt</button>
+      </div>
+      <details class="tcorr"><summary>Laika korekcija</summary>
+        <div class="row">
+          <button class="small" data-m="4" id="bSig2">Signāls tagad = 4:00</button>
+          <button class="small" data-m="1" id="bSig3">= 1:00</button>
+          <button class="small" id="bMinus">−1 min</button>
+          <button class="small" id="bPlus">+1 min</button>
+        </div>
+        <p class="note">Parasti nevajag: ja nokavēji signālu, spied SĀKT un uzreiz SINHR. — taimeris noapaļo uz pilnu minūti uz leju.</p>
+      </details>
+    </div>
+
+    <div class="card" hidden>
+      <h2>Starta līnija</h2>
+      <div class="grid">
+        <div class="ro" hidden><span class="k">Līdz līnijai</span><span class="v big" id="lDist">–</span></div>
+        <div class="ro"><span class="k">Laiks līdz līnijai</span><span class="v big" id="lTtl">–</span></div>
+        <div class="ro"><span class="k">Rezerve (burn)</span><span class="v" id="lBurn">–</span></div>
+        <div class="ro"><span class="k">Favorizētais gals</span><span class="v" id="lFav">–</span></div>
+        <div class="ro"><span class="k">Līnijas nobīde</span><span class="v" id="lBias">–</span></div>
+        <div class="ro"><span class="k">Līnijas garums</span><span class="v" id="lLen">–</span></div>
+      </div>
+      <div class="row" hidden>
+        <button id="bPin">Pin šeit · kreisais gals</button>
+        <button id="bCB">Komiteja šeit · labais gals</button>
+      </div>
+      <p class="note">Galus saglabā ar PIN (kreisais gals) un RC (labais gals) augšā, skatoties no starta puses pret distanci. Rezerve = atlikušais laiks mīnus laiks līdz līnijai ar pašreizējo ātrumu. „Pārbaudi galus” nozīmē, ka gali, šķiet, samainīti vai TWD ir kļūdains.</p>
+    </div>
+      </div>
+  </section>
+
+
+  <!-- DISTANCE -->
+  <section class="panel" id="p-mark" data-need="course" hidden>
+    <div class="card lockcard" data-mod="course"><h2>Visa distance un laylines · Pro</h2><p class="note">Zīmes, vārti, finišs, veidnes, laylines pēc ORC polārām, automātiska zīmju apņemšana un laiks līdz finišam ir maksas klucītis. Bezmaksas versijā pēc starta tiek rādīts kurss, ātrums, vēja maiņa pret halzi un laiks distancē.</p><button class="small" data-gopro="1">Ieslēgt Pro (izstrādes režīms)</button></div>
+    <div class="card">
+      <h2 id="legHead">Distance</h2>
+      <div class="chips" id="seqChips"></div>
+      <div class="msg" id="mMsg">–</div>
+      <div class="grid">
+        <div class="ro"><span class="k" id="mLayK">Līdz layline</span><span class="v big" id="mLay">–</span><span class="u" id="mLayU"></span></div>
+        <div class="ro"><span class="k">Līdz zīmei</span><span class="v big" id="mTot">–</span><span class="u" id="mTotU"></span></div>
+      </div>
+      <div class="grid three">
+        <div class="ro"><span class="k">Attālums</span><span class="v" id="mDist">–</span></div>
+        <div class="ro"><span class="k">Peilējums</span><span class="v" id="mBrg">–</span></div>
+        <div class="ro"><span class="k">VMC</span><span class="v" id="mVmc">–</span></div>
+      </div>
+      <div class="grid three">
+        <div class="ro"><span class="k">Ceļš līdz zīmei</span><span class="v" id="mSail">–</span></div>
+        <div class="ro"><span class="k">Mērķa TWA</span><span class="v" id="mTwa">–</span></div>
+        <div class="ro"><span class="k">Mērķa BSP</span><span class="v" id="mBsp">–</span></div>
+      </div>
+      <div class="row twsrow">
+        <span class="k">TWS, kn</span>
+        <button class="small" id="twsM">−</button><span class="twsv" id="twsVal">–</span><button class="small" id="twsP">+</button>
+        <span class="ro"><span class="k">Sniegums</span><span class="v" id="mPerf">–</span></span>
+      </div>
+      <div class="grid">
+        <div class="ro"><span class="k">Halze</span><span class="v" id="mTack">–</span></div>
+        <div class="ro"><span class="k">Vēja maiņa</span><span class="v" id="mShift">–</span><span class="u" id="mShiftU"></span></div>
+      </div>
+      <div class="grid">
+        <div class="ro"><span class="k">Līdz finišam</span><span class="v" id="mRemT">–</span></div>
+        <div class="ro"><span class="k">Ceļš līdz finišam</span><span class="v" id="mRemS">–</span></div>
+      </div>
+      <div class="row">
+        <button id="bPrev">◀ Iepriekšējā</button>
+        <button id="bNext">Nākamā ▶</button>
+      </div>
+    </div>
+    <div class="card">
+      <canvas id="plot" aria-label="Karte: jahta, distance un laylines"></canvas>
+      <div class="row">
+        <button class="stbdb" id="bTS">Saglabāt labo halzi</button>
+        <button class="portb" id="bTP">Saglabāt kreiso halzi</button>
+      </div>
+      <div class="row">
+        <button id="bMark">Pašreizējā zīme šeit</button>
+        <button id="bCur">Novērtēt straumi</button>
+        <button id="bSimTack" hidden>Sim: mainīt halzi</button>
+      </div>
+      <p class="note" id="tackInfo">–</p>
+      <p class="note">Posma tipu nosaka leņķis starp zīmes virzienu un vēju: šaurāk par Beat Angle — augšvējš (halzes, Beat VMG), platāk par Gybe Angle — pa vējam (Run VMG), starp tiem — sānvējš (ātrums no tabulas pie TWA, kurss koriģēts straumei). Zīme skaitās apņemta, kad esi bijis zonā un attālums sāk pieaugt; finišs — kad šķērso finiša līniju.</p>
+    </div>
+    <div class="card">
+      <h2>Distances veidne</h2>
+      <div class="grid">
+        <label>Veids<select id="tTpl"><option value="wl">Vējš–aizvējš (1 · vārti 4)</option><option value="trap">Trapece (1 · 2 · vārti 3)</option><option value="tri">Trijstūris (1 · 2 · 3)</option><option value="free">Brīva — notīrīt zīmes</option></select></label>
+        <label>Augšvēja posms, NM<input id="tLen" inputmode="decimal" value="1"></label>
+        <label>Apļi<select id="tLaps"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></label>
+        <label>Finišs<select id="tFin"><option value="start">Starta līnija</option><option value="up">Augšā pie 1. zīmes</option><option value="down">Apakšā (jauna līnija)</option></select></label>
+      </div>
+      <button class="primary" id="bTpl">Izveidot distanci</button>
+      <p class="note">Zīmes izvieto no starta līnijas vidus pēc pašreizējā TWD, visas apņemot pa kreiso bortu. Trapecē 2. zīme ir 120° no vēja, 2/3 no augšvēja posma garuma. Pēc tam katru zīmi var pārvietot ar koordinātām.</p>
+    </div>
+    <div class="card">
+      <h2>Zīmes un secība</h2>
+      <div id="mkList"></div>
+      <details>
+        <summary>Pievienot vai mainīt zīmi</summary>
+        <div class="grid three">
+          <label>Nosaukums<input id="aName" placeholder="1, 4, F…"></label>
+          <label>Tips<select id="aType"><option value="mark">Zīme</option><option value="gate">Vārti</option><option value="finish">Finiša līnija</option></select></label>
+          <label>Apņemt<select id="aSide"><option value="P">Pa kreiso bortu</option><option value="S">Pa labo bortu</option></select></label>
+        </div>
+        <label>Pozīcija<select id="aMeth"><option value="brg">Peilējums un attālums</option><option value="ll">Koordinātas</option><option value="here">Šeit (GPS)</option></select></label>
+        <div id="aLL" hidden>
+          <div class="ll" data-pfx="a">
+          <div class="llrow"><input id="aLaD" class="dd" inputmode="numeric" placeholder="57" aria-label="platums grādi"><span>°</span><input id="aLaM" class="mm" inputmode="decimal" placeholder="06,490" aria-label="platums minūtes"><span>′</span><select id="aLaH" aria-label="N/S"><option>N</option><option>S</option></select></div>
+          <div class="llrow"><input id="aLoD" class="dd" inputmode="numeric" placeholder="23" aria-label="garums grādi"><span>°</span><input id="aLoM" class="mm" inputmode="decimal" placeholder="56,985" aria-label="garums minūtes"><span>′</span><select id="aLoH" aria-label="E/W"><option>E</option><option>W</option></select></div>
+          <input id="aPaste" class="llpaste" placeholder="vai ielīmē: 57°6.490′N 23°56.985′E" aria-label="ielīmēt koordinātas">
+          <span class="llok" id="aOk"></span>
+        </div>
+        </div>
+        <div class="grid three" id="aBR">
+          <label>Peilējums, °<input id="aBrg" inputmode="numeric"></label>
+          <label>Attālums, NM<input id="aNm" inputmode="decimal"></label>
+          <label>No<select id="aFrom"></select></label>
+        </div>
+        <label>Vārtu / līnijas platums, m<input id="aWid" inputmode="numeric" value="60"></label>
+        <button id="bAdd">Saglabāt zīmi</button>
+      </details>
+      <div class="grid">
+        <label>Secība (atdala ar atstarpi)<input id="aSeq" placeholder="1 4 1 F"></label>
+        <label>Apņemšanas zona, m<input id="aZone" inputmode="numeric"></label>
+      </div>
+      <button id="bSeq">Saglabāt secību</button>
+      <p class="note" id="crsMsg">Koordinātas — grādi un minūtes, kā plotterī (57°06,490′N). Var ielīmēt arī jebkurā formātā: decimālgrādi, grādi-minūtes vai grādi-minūtes-sekundes. Vārtiem un līnijām pozīcija ir centrs; gali izvietoti perpendikulāri vējam.</p>
+    </div>
+  </section>
+
+  <!-- KONKURENTI (AIS) -->
+  <section class="panel" id="p-ais" data-need="ais" hidden>
+    <div class="card lockcard" data-mod="ais"><h2>AIS konkurenti · Pro</h2><p class="note">Līdz 3 konkurentiem no jahtas AIS uztvērēja ar laika starpību, tendenci, ātrumu un kursu.</p><button class="small" data-gopro="1">Ieslēgt Pro (izstrādes režīms)</button></div>
+    <div class="card">
+      <h2>Konkurenti · AIS</h2>
+      <p class="note" id="aisSrc">–</p>
+      <canvas id="aisCv" aria-label="Karte: es, konkurenti un pašreizējā zīme"></canvas>
+    </div>
+    <div id="compCards" class="panel"></div>
+    <div class="card">
+      <h2>Izvēlēties konkurentus (līdz 3)</h2>
+      <div id="aisList"></div>
+      <div class="grid">
+        <label>MMSI<input id="cMmsi" inputmode="numeric" placeholder="275000000"></label>
+        <label>Nosaukums<input id="cName" placeholder="jahtas nosaukums"></label>
+      </div>
+      <button id="bCompAdd">Pievienot pēc MMSI</button>
+      <p class="note" id="compMsg">Starpība rēķināta ar to pašu ORC modeli un distanci kā tavs laiks līdz finišam: + nozīmē, ka tu esi priekšā. Tendence — cik sekunžu minūtē tu iegūsti (+) vai zaudē (−) pēdējās 3 minūtēs.</p>
+    </div>
+  </section>
+
+  <!-- BRAUCIENI (žurnāls) -->
+  <section class="panel" id="p-log" hidden>
+    <div class="card">
+      <h2>Ieraksts</h2>
+      <p class="note" id="recState">–</p>
+      <div class="row"><button class="primary" id="bRecStart">Sākt ierakstu tagad</button><button class="danger" id="bRecStop">STOP un saglabāt</button></div>
+      <p class="note">Ieraksts sākas automātiski ar starta signālu. STOP saglabā braucienu šajā telefonā; to var eksportēt kā CSV, JSON vai GPX un atvērt analīzes programmā.</p>
+    </div>
+    <div class="card">
+      <h2>Saglabātie braucieni</h2>
+      <div id="sessList"></div>
+    </div>
+    <div class="card" id="sessCard" hidden>
+      <h2 id="sessTitle">Brauciens</h2>
+      <canvas id="sessCv" aria-label="Brauciena trase"></canvas>
+      <div class="grid three" id="sessStats"></div>
+      <div class="row"><button id="bExpCsv">CSV</button><button id="bExpJson">JSON</button><button id="bExpGpx">GPX</button><button class="danger" id="bSessDel">Dzēst</button></div>
+      <p class="note" id="expMsg"></p>
+    </div>
+  </section>
+
+  <!-- IESTATĪJUMI -->
+  <section class="panel" id="p-set" hidden>
+    <div class="card">
+      <h2>Licence un klucīši</h2>
+      <label>Licence (izstrādes režīms)<select id="sLic"><option value="free">Free — bezmaksas pamats</option><option value="pro">Pro — visi klucīši</option></select></label>
+      <div id="modList"></div>
+      <p class="note">Pirms maksājumu sistēmas licenci var pārslēgt šeit testēšanai. Īstajā versijā Pro atslēgs pirkums laivas kontā.</p>
+    </div>
+    <div class="card">
+      <h2>Starta procedūra</h2>
+      <div class="grid">
+        <label>Secība<select id="sType"><option value="5">5-4-1-0 (RRS 26)</option><option value="3">3-2-1-0</option></select></label>
+        <label>Klašu skaits pēc kārtas<select id="sN"><option>1</option><option>2</option><option>3</option><option>4</option></select></label>
+        <label>Sagatavošanās karogs<select id="sPrep"><option value="P">P</option><option value="I">I (RRS 30.1)</option><option value="Z">Z (RRS 30.2)</option><option value="U">U (RRS 30.3)</option><option value="B">Melnais (RRS 30.4)</option></select></label>
+        <label>Halzes zudums, s<input id="sLoss" type="number" inputmode="numeric" min="0" max="60"></label>
+      </div>
+      <label class="check"><input type="checkbox" id="sHorn">Taures signāli</label>
+      <label class="check"><input type="checkbox" id="sBeep">Pīkstieni pie 1 min, 30 s un pēdējās 10 s</label>
+    </div>
+    <div class="card">
+      <h2>Vējš</h2>
+      <div class="grid">
+        <label>TWD (no kurienes pūš), °<input id="sTwd" type="number" inputmode="numeric" min="0" max="359"></label>
+        <label>Avots<select id="sTwdSrc"><option value="auto">No instrumentiem; citādi no halzēm</option><option value="manual">Tikai manuāli</option></select></label>
+      </div>
+      <button id="bTwd">Saglabāt vēja virzienu</button>
+    </div>
+    <div class="card">
+      <h2>ORC sertifikāts — polāras</h2>
+      <label>Laylines aprēķins<select id="sLay"><option value="orc">ORC polāras (TWS + TWD)</option><option value="tacks">Izmērītās halzes (GPS)</option></select></label>
+      <div class="grid three">
+        <label>TWS, kn<input id="sTws" inputmode="decimal"></label>
+        <label>Dreifs, °<input id="sLee" inputmode="decimal"></label>
+        <label>Jahta<input id="sPolName"></label>
+      </div>
+      <div class="grid">
+        <label>Straume uz, °<input id="sCurSet" inputmode="numeric"></label>
+        <label>Straume, kn<input id="sCurKn" inputmode="decimal"></label>
+      </div>
+      <label>TWS koeficients (masta galā → ORC vējš)<input id="sTwsK" inputmode="decimal"></label>
+      <p class="note">Sniegumu rēķina pret ūdeni: BSP no lāpstiņriteņa un patiesais vējš no šķietamā vēja un BSP — straume tajā neietilpst. Koeficients pārrēķina instrumentu TWS uz ORC polāru vēju (1,00 = bez korekcijas; kalibrē pēc Gabriel datiem).</p>
+      <button id="bOrc">Saglabāt</button>
+      <div class="tblwrap"><table class="pol" id="polTbl"></table></div>
+      <label>Ielīmē sertifikāta tabulu „Rated boat velocities” (visas rindas)<textarea id="sPaste" rows="5" placeholder="Wind Velocity 4 kt 6 kt …&#10;Beat Angles 45.9° 43.0° …&#10;Beat VMG 2.62 3.71 …&#10;52° 4.12 5.63 …&#10;…&#10;Run VMG 2.58 3.79 …&#10;Gybe Angles 140.8° 144.7° …"></textarea></label>
+      <button id="bPaste">Ielasīt polāras</button>
+      <p class="note" id="polNote">Dati no ORC sertifikāta 1. lapas tabulas „Rated boat velocities”. Starp TWS un TWA vērtībām interpolē lineāri. Straume „uz” — virziens, uz kuru tā plūst.</p>
+    </div>
+    <div class="card">
+      <h2>Starta līnija — koordinātas</h2>
+      <div class="ll" data-pfx="cb"><span class="llt">Komitejas kuģis (labais gals)</span>
+          <div class="llrow"><input id="cbLaD" class="dd" inputmode="numeric" placeholder="57" aria-label="platums grādi"><span>°</span><input id="cbLaM" class="mm" inputmode="decimal" placeholder="06,490" aria-label="platums minūtes"><span>′</span><select id="cbLaH" aria-label="N/S"><option>N</option><option>S</option></select></div>
+          <div class="llrow"><input id="cbLoD" class="dd" inputmode="numeric" placeholder="23" aria-label="garums grādi"><span>°</span><input id="cbLoM" class="mm" inputmode="decimal" placeholder="56,985" aria-label="garums minūtes"><span>′</span><select id="cbLoH" aria-label="E/W"><option>E</option><option>W</option></select></div>
+          <input id="cbPaste" class="llpaste" placeholder="vai ielīmē: 57°6.490′N 23°56.985′E" aria-label="ielīmēt koordinātas">
+          <span class="llok" id="cbOk"></span>
+        </div>
+      <div class="ll" data-pfx="pin"><span class="llt">Pin (kreisais gals)</span>
+          <div class="llrow"><input id="pinLaD" class="dd" inputmode="numeric" placeholder="57" aria-label="platums grādi"><span>°</span><input id="pinLaM" class="mm" inputmode="decimal" placeholder="06,490" aria-label="platums minūtes"><span>′</span><select id="pinLaH" aria-label="N/S"><option>N</option><option>S</option></select></div>
+          <div class="llrow"><input id="pinLoD" class="dd" inputmode="numeric" placeholder="23" aria-label="garums grādi"><span>°</span><input id="pinLoM" class="mm" inputmode="decimal" placeholder="56,985" aria-label="garums minūtes"><span>′</span><select id="pinLoH" aria-label="E/W"><option>E</option><option>W</option></select></div>
+          <input id="pinPaste" class="llpaste" placeholder="vai ielīmē: 57°6.490′N 23°56.985′E" aria-label="ielīmēt koordinātas">
+          <span class="llok" id="pinOk"></span>
+        </div>
+      <button id="bCoords">Saglabāt koordinātas</button>
+    </div>
+    <div class="card">
+      <h2>Ekrāns</h2>
+      <label class="check"><input type="checkbox" id="sDay">Dienas režīms (melns uz balta)</label>
+      <div class="grid three">
+        <label>Pielāgots: augšā<select id="sC1"></select></label>
+        <label>Pielāgots: apakšā<select id="sC2"></select></label>
+        <label>Pielāgots: josla<select id="sCB"><option value="pace">Starta temps</option><option value="line">Līdz līnijai</option><option value="shift">Vēja maiņa</option><option value="perf">Sniegums</option><option value="twa">TWA pret mērķi</option></select></label>
+      </div>
+      <label>Telefona attālums līdz priekšgalam, m<input id="sBow" inputmode="decimal"></label>
+      <button id="bInstSave">Saglabāt</button>
+    </div>
+    <div class="card">
+      <h2>Signālu žurnāls</h2>
+      <ol class="log" id="log" reversed></ol>
+    </div>
+    <div class="card" data-needcard="instr">
+      <h2>Signal K (jahtas tīkls) · Pro</h2>
+      <label>Servera adrese<input id="sSkUrl" inputmode="url" autocapitalize="off" spellcheck="false"></label>
+      <label class="check"><input type="checkbox" id="sSkOn">Savienoties ar Signal K</label>
+      <p class="note" id="skStat">–</p>
+      <p class="note">No Signal K tiek ņemti AIS mērķi (konkurenti) un savas jahtas BSP, šķietamais vējš (no tiem lietotne pati rēķina patieso vēju pret ūdeni) — sniegumam pret ORC polārām, kā arī kurss: no tā rēķina TWD (vēja virzienu) startam un vēja maiņām bez manuālas ievades. Savienojums strādā, ja lietotne atvērta no paša Signal K servera (http), jo no https lapas pārlūks neļauj atvērt ws:// savienojumu.</p>
+    </div>
+    <div class="card">
+      <h2>Simulācija un dati</h2>
+      <label class="check"><input type="checkbox" id="sSim">Simulācijas režīms (bez GPS)</label>
+      <button id="bSample">Ielādēt parauga distanci</button>
+      <button class="danger" id="bReset">Dzēst visus datus</button>
+      <p class="note" id="setMsg"></p>
+    </div>
+  </section>
+</div>
+
+<nav class="tabs" role="tablist">
+  <button role="tab" aria-selected="true" data-p="p-inst">Ekrāns</button>
+  <button role="tab" aria-selected="false" data-p="p-mark">Distance</button>
+  <button role="tab" aria-selected="false" data-p="p-ais">AIS</button>
+  <button role="tab" aria-selected="false" data-p="p-log">Braucieni</button>
+  <button role="tab" aria-selected="false" data-p="p-set">Iestatījumi</button>
+</nav>
+
+<script>
+(function(){
+"use strict";
+const KN=0.514444, R=6371000, D2R=Math.PI/180, MIN=60000;
+const $=id=>document.getElementById(id);
+
+/* ---------- state ---------- */
+const EX_POLAR={name:"Gabriel LAT-3 · ORC Club 2026, Nr. 040/26",tws:[4,6,8,10,12,14,16,20,24],
+  ang:[45.9,43.0,40.7,38.9,37.3,36.6,36.5,36.7,37.3],vmg:[2.62,3.71,4.49,5.05,5.38,5.51,5.59,5.63,5.61],
+  twa:[52,60,75,90,110,120,135,150],
+  spd:[[4.12,5.63,6.62,7.19,7.48,7.61,7.68,7.74,7.74],[4.42,5.92,6.86,7.37,7.64,7.78,7.86,7.93,7.96],[4.65,6.12,7.02,7.49,7.78,7.98,8.12,8.27,8.37],[4.53,5.99,6.96,7.49,7.81,8.06,8.27,8.62,8.84],
+       [4.24,5.91,7.06,7.66,8.01,8.29,8.49,8.84,9.15],[4.10,5.75,6.92,7.59,8.00,8.36,8.71,9.25,9.65],[3.59,5.16,6.38,7.26,7.78,8.18,8.58,9.47,10.43],[2.98,4.38,5.56,6.57,7.32,7.79,8.17,8.98,9.92]],
+  run:[2.58,3.79,4.82,5.70,6.45,7.06,7.53,8.25,9.00],gybe:[140.8,144.7,148.9,152.3,157.9,165.1,170.9,177.2,172.7]};
+const DEF={license:"free",comp:[],skUrl:"ws://10.10.10.1:3000/signalk/v1/stream?subscribe=none",skOn:false,cb:null,pin:null,marks:{},order:[],leg:0,finished:false,inZone:false,minD:0,zone:40,raceStart:null,twd:null,twdSrc:"auto",tacks:{S:null,P:null},polar:EX_POLAR,tws:10,leeway:3,twsK:1,curSet:0,curKn:0,laySrc:"orc",day:false,autoRace:false,c1:"sog",c2:"cog",cbar:"shift",bow:0,scr:0,
+  seq:{type:"5",n:1,prep:"P",running:false,t0:0,offset:0,ap:false,fs:false,xUntil:0,log:[]},
+  horn:true,beep:true,loss:15,sim:false};
+let S;
+function load(){try{const r=localStorage.getItem("regate-v1");if(r){S=Object.assign(structuredClone(DEF),JSON.parse(r));S.seq=Object.assign(structuredClone(DEF.seq),S.seq||{});S.tacks=Object.assign({S:null,P:null},S.tacks||{});if(!S.polar||/^Piemērs/.test(S.polar.name||"")||(/^Gabriel/.test(S.polar.name||"")&&!S.polar.twa))S.polar=structuredClone(EX_POLAR);
+    if(S.mark&&(!S.order||!S.order.length)){S.marks={"1":{id:"1",name:"1",type:"mark",p:S.mark,side:"P"}};S.order=["1"];S.leg=0}delete S.mark;
+    if(!S.marks)S.marks={};if(!S.order)S.order=[];if(!S.scrV2){if(S.scr>=1)S.scr+=1;S.scrV2=true}return true}}catch(e){}S=structuredClone(DEF);return false}
+function save(){try{localStorage.setItem("regate-v1",JSON.stringify(S))}catch(e){}}
+const live={hist:[],track:[],src:"none",acc:null,err:null};
+
+/* ---------- geometry ---------- */
+const wrap360=a=>((a%360)+360)%360;
+const diff=(a,b)=>{let d=wrap360(a-b);return d>180?d-360:d};
+function xy(p,o){return{x:(p.lon-o.lon)*D2R*R*Math.cos(o.lat*D2R),y:(p.lat-o.lat)*D2R*R}}
+function ll(v,o){return{lat:o.lat+v.y/R/D2R,lon:o.lon+v.x/(R*Math.cos(o.lat*D2R))/D2R}}
+const vec=(b,l)=>({x:Math.sin(b*D2R)*l,y:Math.cos(b*D2R)*l});
+const brg=v=>wrap360(Math.atan2(v.x,v.y)/D2R);
+const len=v=>Math.hypot(v.x,v.y);
+const dot=(a,b)=>a.x*b.x+a.y*b.y;
+const add=(a,b)=>({x:a.x+b.x,y:a.y+b.y});
+function move(p,b,m){return ll(vec(b,m),p)}
+function circMean(a,b){return brg(add(vec(a,1),vec(b,1)))}
+
+/* ---------- formatting ---------- */
+const dec=(n,d)=>n.toFixed(d).replace(".",",");
+function mmss(ms,signed){if(!isFinite(ms))return"–";const neg=ms<0;let s=Math.round(Math.abs(ms)/1000);const m=Math.floor(s/60);s%=60;return(neg?"−":(signed?"+":""))+m+":"+String(s).padStart(2,"0")}
+function dist(m){if(!isFinite(m))return"–";const a=Math.abs(m),sg=m<0?"−":"";return a<1000?sg+Math.round(a)+" m":sg+dec(a/1852,2)+" NM"}
+const deg=a=>a==null||!isFinite(a)?"–":String(Math.round(wrap360(a))).padStart(3,"0")+"°";
+/* coordinate input: degrees + decimal minutes fields, plus a paste box that accepts DD, DM or DMS with N/S/E/W */
+function parseOne(t,hemiPos,hemiNeg){t=String(t).trim().toUpperCase().replace(/,/g,".");if(!t)return null;
+  let sg=1;if(new RegExp("["+hemiNeg+"]").test(t)||/^-/.test(t))sg=-1;
+  const n=(t.match(/\d+(?:\.\d+)?/g)||[]).map(Number);if(!n.length)return null;
+  let v=n[0]+(n[1]||0)/60+(n[2]||0)/3600;if(n.length===1&&!/[°]/.test(t)&&n[0]>180)return null;return sg*v}
+function parsePair(t){t=String(t).replace(/[•|;]/g," ").trim();if(!t)return null;
+  const U=t.toUpperCase(),i=U.search(/[NS]/);let a,b;
+  if(i>=0){a=t.slice(0,i+1);b=t.slice(i+1)}
+  else{const parts=t.replace(/,(?=\s)/g," ").split(/\s+/).filter(Boolean);if(parts.length===2){a=parts[0];b=parts[1]}else if(parts.length===4){a=parts.slice(0,2).join(" ");b=parts.slice(2).join(" ")}else if(parts.length===6){a=parts.slice(0,3).join(" ");b=parts.slice(3).join(" ")}else return null}
+  const la=parseOne(a,"N","S"),lo=parseOne(b,"E","W");if(la==null||lo==null||Math.abs(la)>90||Math.abs(lo)>180)return null;return{lat:la,lon:lo}}
+function llSet(pfx,p){const f=(v,D,M,H,pos,neg)=>{if(v==null){$(D).value="";$(M).value="";return}const a=Math.abs(v),d=Math.floor(a),m=(a-d)*60;
+    $(D).value=d;$(M).value=m.toFixed(3).padStart(6,"0").replace(".",",");$(H).value=v<0?neg:pos};
+  f(p?p.lat:null,pfx+"LaD",pfx+"LaM",pfx+"LaH","N","S");f(p?p.lon:null,pfx+"LoD",pfx+"LoM",pfx+"LoH","E","W");$(pfx+"Paste").value="";llShow(pfx)}
+function llGet(pfx){const pp=parsePair($(pfx+"Paste").value);if(pp)return pp;
+  const g=id=>{const v=parseFloat(String($(id).value).replace(",","."));return isFinite(v)?v:null};
+  const ld=g(pfx+"LaD"),lm=g(pfx+"LaM")||0,od=g(pfx+"LoD"),om=g(pfx+"LoM")||0;if(ld==null||od==null||lm>=60||om>=60)return null;
+  const la=(ld+lm/60)*($(pfx+"LaH").value==="S"?-1:1),lo=(od+om/60)*($(pfx+"LoH").value==="W"?-1:1);
+  if(Math.abs(la)>90||Math.abs(lo)>180)return null;return{lat:la,lon:lo}}
+function llShow(pfx){const p=llGet(pfx),e=$(pfx+"Ok");const any=[$(pfx+"LaD").value,$(pfx+"LoD").value,$(pfx+"Paste").value].some(v=>String(v).trim());
+  e.textContent=p?"✓ "+fmtLL(p)+"  ("+p.lat.toFixed(6)+", "+p.lon.toFixed(6)+")":any?"Nepilnīgas vai kļūdainas koordinātas":"";}
+function llWire(pfx){["LaD","LaM","LaH","LoD","LoM","LoH","Paste"].forEach(k=>{$(pfx+k).addEventListener("input",()=>llShow(pfx))});
+  $(pfx+"Paste").addEventListener("change",()=>{const p=parsePair($(pfx+"Paste").value);if(p)llSet(pfx,p)})}
+function fmtLL(p){if(!p)return"nav";const f=(v,pos,neg)=>{const a=Math.abs(v),d=Math.floor(a),m=(a-d)*60;return d+"°"+dec(m,3)+"′"+(v>=0?pos:neg)};return f(p.lat,"N","S")+" "+f(p.lon,"E","W")}
+
+/* ---------- audio ---------- */
+let ac=null;
+function audio(){if(!ac){try{ac=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(ac&&ac.state==="suspended")ac.resume();return ac}
+function horn(dur){const c=audio();if(!c||!S.horn)return;const t=c.currentTime,g=c.createGain(),f=c.createBiquadFilter();f.type="lowpass";f.frequency.value=1400;
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.5,t+.04);g.gain.setValueAtTime(.5,t+dur-.08);g.gain.linearRampToValueAtTime(0,t+dur);
+  [233,349].forEach(fr=>{const o=c.createOscillator();o.type="sawtooth";o.frequency.value=fr;o.connect(f);o.start(t);o.stop(t+dur)});f.connect(g);g.connect(c.destination);
+  if(navigator.vibrate)try{navigator.vibrate(dur*1000)}catch(e){}}
+function sound(code){/* "1" one short, "2" two short, "L" one long */
+  if(code==="L")horn(2.0);else if(code==="2"){horn(.6);setTimeout(()=>horn(.6),900)}else horn(.6)}
+function beep(hi){const c=audio();if(!c||!S.beep)return;const t=c.currentTime,o=c.createOscillator(),g=c.createGain();o.frequency.value=hi?1320:880;o.type="square";
+  g.gain.setValueAtTime(.18,t);g.gain.exponentialRampToValueAtTime(.001,t+(hi?.45:.15));o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+.5)}
+
+/* ---------- wake lock ---------- */
+let wl=null;
+async function wake(){try{if("wakeLock" in navigator&&!wl){wl=await navigator.wakeLock.request("screen");wl.addEventListener("release",()=>{wl=null})}}catch(e){}}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")wake()});
+document.addEventListener("pointerdown",()=>{audio();wake()},{passive:true});
+
+/* ---------- position sources ---------- */
+function pushFix(f){live.hist.push(f);const cut=f.t-30000;while(live.hist.length&&live.hist[0].t<cut)live.hist.shift();
+  const last=live.track[live.track.length-1];if(!last||f.t-last.t>=3000){live.track.push({lat:f.lat,lon:f.lon,t:f.t});if(live.track.length>600)live.track.shift()}}
+function pos(){return live.hist.length?live.hist[live.hist.length-1]:null}
+function velocity(win){/* ground velocity m/s as vector, from displacement over window ms */
+  const h=live.hist;if(h.length<2)return null;const L=h[h.length-1];
+  if(!win&&L.spd!=null&&L.hdg!=null&&isFinite(L.hdg)&&L.spd>.2)return vec(L.hdg,L.spd);
+  const w=win||5000;let F=h[0];for(const p of h){if(L.t-p.t<=w){F=p;break}}
+  const dt=(L.t-F.t)/1000;if(dt<(win?5:1.5))return null;const d=xy(L,F);return{x:d.x/dt,y:d.y/dt}}
+
+let gpsId=null;
+function startGPS(){stopGPS();if(!("geolocation" in navigator)){live.err="Pārlūkam nav GPS piekļuves";return}
+  try{gpsId=navigator.geolocation.watchPosition(p=>{live.src="gps";live.err=null;live.acc=p.coords.accuracy;
+      pushFix({t:p.timestamp||Date.now(),lat:p.coords.latitude,lon:p.coords.longitude,spd:p.coords.speed,hdg:p.coords.heading})},
+    e=>{live.err=e.code===1?"GPS atļauja liegta":"GPS signāla nav";live.src="none"},{enableHighAccuracy:true,maximumAge:0,timeout:15000})}catch(e){live.err="GPS nav pieejams"}}
+function stopGPS(){if(gpsId!=null){try{navigator.geolocation.clearWatch(gpsId)}catch(e){}gpsId=null}}
+
+/* simulation: wind 230° oscillating ±7° over 4 min, 0.3 kn current setting 060°; the boat sails the course on autopilot at 97% of ORC polar */
+const SIM_O={lat:57.10,lon:23.90};
+const sim={p:null,board:"S",timer:null};
+const simTwd=t=>230+7*Math.sin(2*Math.PI*t/240000);
+/* one simulated boat: st={p,board,f(speed factor),leg(null = follow my leg),tackBias(s)} */
+function simVelFor(st,t){const tw=simTwd(t),w=S.twd!=null?S.twd:230,tws=S.tws||10;let hdg,bsp;
+  const li=st.leg==null?S.leg:st.leg,m=item(li);let r=null;
+  if(m&&!(st.leg==null&&S.finished)&&st.p){const aim=aimPoint(m,st.p,w);r=legSolve(xy(aim.pt,st.p),w,st.board);
+    if(st.leg!=null&&len(xy(aim.pt,st.p))<25&&li<S.order.length-1)st.leg++}
+  if(r&&!r.direct&&r.type!=="reach"&&r.t1!=null){
+    if(r.tackNow||(r.lay!=null&&r.lay<=(st.early||1)&&r.t2>1))st.board=st.board==="S"?"P":"S";
+    const tg=r.type==="beat"?target(tws):runTarget(tws),a=tg.ang+(r.type==="beat"?3:0);hdg=st.board==="S"?tw-a:tw+a;bsp=tg.bsp}
+  else if(r&&r.hdg!=null){hdg=r.hdg;bsp=speedAt(Math.abs(diff(hdg,tw)),tws)}
+  else{const tg=target(tws),a=tg.ang+3;hdg=st.board==="S"?tw-a:tw+a;bsp=tg.bsp}
+  const bw=bsp*(st.f||.97);st.inst={bsp:bw,twa:diff(tw,hdg),tws,hdg};
+  return add(vec(hdg,bw*KN),vec(60,.3*KN))}
+function simVel(t){return simVelFor(sim,t)}
+const SIM_FLEET=[{mmsi:"275000301",name:"Aralez",f:.95,early:200,off:[30,120]},{mmsi:"275000302",name:"World of Love",f:1.0,early:1,off:[200,90]},{mmsi:"275000303",name:"Shadowfax",f:.92,early:400,off:[100,-60]},{mmsi:"275000304",name:"Sylvia",f:.98,early:60,off:[320,150]}];
+function startSim(){stopSim();stopGPS();live.hist=[];live.track=[];live.src="sim";live.acc=3;live.err=null;
+  sim.p=move(SIM_O,50,250);sim.board="S";
+  sim.fleet=SIM_FLEET.map(b=>({...b,p:move(sim.p,b.off[0],Math.abs(b.off[1])),board:b.off[1]<0?"P":"S",leg:S.leg}));
+  const step=()=>{const t=Date.now(),v=simVel(t);sim.p=ll(v,sim.p);pushFix({t,lat:sim.p.lat,lon:sim.p.lon,spd:len(v),hdg:brg(v)});if(sim.inst){live.inst={...sim.inst,t,src:"sim"};windUpdate(live.inst)}
+    sim.fleet.forEach(b=>{const vb=simVelFor(b,t);b.p=ll(vb,b.p);aisUpdate(b.mmsi,{name:b.name,lat:b.p.lat,lon:b.p.lon,cog:brg(vb),sog:len(vb),t})})};
+  for(let i=0;i<25;i++){const t=Date.now()-(25-i)*1000,v=simVel(t);sim.p=ll(v,sim.p);pushFix({t,lat:sim.p.lat,lon:sim.p.lon,spd:len(v),hdg:brg(v)})}
+  sim.timer=setInterval(step,1000)}
+function stopSim(){if(sim.timer){clearInterval(sim.timer);sim.timer=null}if(live.inst&&live.inst.src==="sim")live.inst=null}
+function loadSample(){S.cb=move(SIM_O,320,120);S.pin=move(move(SIM_O,140,120),230,15);S.twd=230;S.tws=10;S.curSet=60;S.curKn=.3;S.leeway=3;S.laySrc="orc";S.tacks={S:null,P:null};
+  buildCourse("wl",1,2,"start");save()}
+
+/* ---------- modules ("Lego" bricks) & licence ---------- */
+const MODS={core:{n:"Pamats: starts, līnija, kurss, ātrums, vēja maiņa pret halzi, laiks distancē, ieraksts un eksports",free:true},
+  orc:{n:"ORC polāras, mērķa ātrums un sniegums"},course:{n:"Visa distance, laylines, zīmju apņemšana, laiks līdz finišam"},
+  instr:{n:"Jahtas instrumenti (Signal K): vējš, log, kompass"},ais:{n:"AIS konkurenti"},crew:{n:"Komanda un lomu ekrāni (drīzumā)"},
+  boat:{n:"Laivas profils: ORC sertifikāti, buras (drīzumā)"},analysis:{n:"Analīze mākonī (drīzumā)"}};
+function has(m){return !!(MODS[m]&&(MODS[m].free||S.license==="pro"))}
+function applyLocks(){document.querySelectorAll("[data-need]").forEach(el=>el.classList.toggle("locked",!has(el.dataset.need)));
+  document.querySelectorAll("[data-needcard]").forEach(el=>el.hidden=!has(el.dataset.needcard));
+  const ml=$("modList");if(ml)ml.innerHTML=Object.entries(MODS).map(([k,m])=>'<div class="mrow2"><span>'+m.n+'</span><span class="tag'+(has(k)?" on":"")+'">'+(m.free?"Bezmaksas":has(k)?"Ieslēgts":"Pro")+'</span></div>').join("");if(typeof renderInst==="function")renderInst()}
+document.addEventListener("click",e=>{if(e.target.closest("[data-gopro]")){S.license="pro";save();applyLocks();fillSettings&&fillSettings()}});
+
+/* ---------- tack reference: lift/header without wind instruments (core) ---------- */
+const TK={hist:[],side:"A",refs:{A:null,B:null},pending:null,lastTack:0,count:0};
+function hdgNow(){const v=velocity();return v&&len(v)>.5?brg(v):null}
+function meanH(t0,t1){const xs=TK.hist.filter(x=>x.t>=t0&&x.t<=t1);if(xs.length<3)return null;let sx=0,sy=0;xs.forEach(x=>{sx+=Math.sin(x.h*D2R);sy+=Math.cos(x.h*D2R)});
+  const m=wrap360(Math.atan2(sx,sy)/D2R);const sd=Math.sqrt(xs.reduce((a,x)=>a+diff(x.h,m)**2,0)/xs.length);return{m,sd}}
+function tackReset(){TK.hist=[];TK.side="A";TK.refs={A:null,B:null};TK.pending=null;TK.lastTack=0;TK.count=0}
+function tackTick(now){const h=hdgNow();if(h==null)return;TK.hist.push({t:now,h});while(TK.hist.length&&TK.hist[0].t<now-60000)TK.hist.shift();
+  const a=meanH(now-5000,now),b=meanH(now-25000,now-15000);
+  if(a&&b&&Math.abs(diff(a.m,b.m))>60&&now-TK.lastTack>30000){TK.lastTack=now;TK.side=TK.side==="A"?"B":"A";TK.pending=now;TK.count++;recEvent("halze",{no:TK.count});beep(false)}
+  if(TK.pending&&now-TK.pending>15000){const m=meanH(now-10000,now);if(m&&m.sd<8){TK.refs[TK.side]=m.m;TK.pending=null}}
+  if(TK.refs[TK.side]==null&&!TK.pending){const m=meanH(now-20000,now);if(m&&m.sd<6&&TK.hist.length>15)TK.refs[TK.side]=m.m}}
+/* returns {dev: degrees turned right(+)/left(−) from this tack's reference, lift: + lift / − header when wind side is known} */
+function tackShift(){const h=hdgNow(),ref=TK.refs[TK.side];if(h==null||ref==null)return null;const dev=diff(h,ref);
+  let w=twd()?twd().v:null;
+  if(w==null&&TK.refs.A!=null&&TK.refs.B!=null){const sep=Math.abs(diff(TK.refs.A,TK.refs.B));if(sep>50){w=circMean(TK.refs.A,TK.refs.B);if(sep>130)w=null}}
+  if(w==null)return{dev,lift:null};return{dev,lift:Math.abs(diff(ref,w))-Math.abs(diff(h,w))}}
+function hms(ms){if(ms==null||!isFinite(ms))return"–";let s=Math.floor(ms/1000);const h=Math.floor(s/3600);s-=h*3600;const m=Math.floor(s/60);s-=m*60;return(h?h+":"+String(m).padStart(2,"0"):m)+":"+String(s).padStart(2,"0")}
+function elapsed(){if(REC.on)return Date.now()-REC.start;if(CLK.after!=null)return CLK.after;return null}
+
+/* ---------- recording & saved races (core) ---------- */
+const REC={on:false,id:null,start:0,pts:[],ev:[],last:0};
+let idb=null,memSess={};
+function dbOpen(){return new Promise(res=>{try{const rq=indexedDB.open("regate",1);rq.onupgradeneeded=()=>rq.result.createObjectStore("sess",{keyPath:"id"});rq.onsuccess=()=>{idb=rq.result;res(idb)};rq.onerror=()=>res(null)}catch(e){res(null)}})}
+function dbPut(o){return new Promise(res=>{if(!idb){memSess[o.id]=o;return res()}try{const tx=idb.transaction("sess","readwrite");tx.objectStore("sess").put(o);tx.oncomplete=()=>res();tx.onerror=()=>{memSess[o.id]=o;res()}}catch(e){memSess[o.id]=o;res()}})}
+function dbAll(){return new Promise(res=>{if(!idb)return res(Object.values(memSess));try{const rq=idb.transaction("sess").objectStore("sess").getAll();rq.onsuccess=()=>res(rq.result||[]);rq.onerror=()=>res(Object.values(memSess))}catch(e){res(Object.values(memSess))}})}
+function dbDel(id){return new Promise(res=>{delete memSess[id];if(!idb)return res();try{const tx=idb.transaction("sess","readwrite");tx.objectStore("sess").delete(id);tx.oncomplete=()=>res();tx.onerror=()=>res()}catch(e){res()}})}
+function recEvent(e,data){if(REC.on)REC.ev.push(Object.assign({t:Date.now(),e},data||{}))}
+function recStart(t){if(REC.on)return;REC.on=true;REC.start=t||Date.now();REC.id="r"+REC.start;REC.pts=[];REC.ev=[{t:REC.start,e:"starts"}];REC.last=0;tackReset();addLog("Ieraksts sākts");recSaveDraft()}
+function sessObj(status){return{id:REC.id,start:REC.start,end:Date.now(),status,boat:(S.polar&&S.polar.name)||"",course:S.order.slice(),pts:REC.pts,ev:REC.ev}}
+function recSaveDraft(){if(REC.on)dbPut(sessObj("recording"))}
+async function recStop(reason){if(!REC.on)return;REC.ev.push({t:Date.now(),e:reason||"stop"});const o=sessObj("done");REC.on=false;await dbPut(o);addLog("Brauciens saglabāts ("+hms(o.end-o.start)+")");selSess=o.id;if(!$("p-log").hidden)renderLogTab()}
+function recTick(now){if(!REC.on)return;const p=pos();if(!p||now-REC.last<1000)return;REC.last=now;const v=velocity(),sh=tackShift(),w=twd();
+  REC.pts.push({t:now,lat:+p.lat.toFixed(6),lon:+p.lon.toFixed(6),sog:v?+(len(v)/KN).toFixed(2):null,cog:v&&len(v)>.3?Math.round(brg(v)):null,dev:sh?Math.round(sh.dev):null,lift:sh&&sh.lift!=null?Math.round(sh.lift):null,twd:w?Math.round(w.v):null,tack:TK.side})}
+setInterval(recSaveDraft,30000);
+let stopArmI=0;
+$("iStop").onclick=()=>{const n=Date.now();if(n-stopArmI>3000){stopArmI=n;$("iStop").textContent="APSTIPRINĀT";setTimeout(()=>$("iStop").textContent="STOP",3000);return}recStop("stop");$("iStop").textContent="STOP"};
+$("bRecStart").onclick=()=>{recStart(Date.now());renderLogTab()};
+let stopArmL=0;
+$("bRecStop").onclick=()=>{const n=Date.now();if(n-stopArmL>3000){stopArmL=n;$("bRecStop").textContent="Spied vēlreiz, lai saglabātu";setTimeout(()=>$("bRecStop").textContent="STOP un saglabāt",3000);return}recStop("stop");$("bRecStop").textContent="STOP un saglabāt"};
+function sessStats(o){const P=o.pts.filter(x=>x.lat!=null);let d=0,mx=0;for(let i=1;i<P.length;i++)d+=len(xy(P[i],P[i-1]));P.forEach(x=>{if(x.sog>mx)mx=x.sog});
+  const dur=(o.end-o.start)/1000;return{d,mx,avg:dur>0?d/dur/KN:0,dur,tacks:o.ev.filter(e=>e.e==="halze").length,n:P.length}}
+let selSess=null,sessCache=[];
+async function renderLogTab(){if($("p-log").hidden)return;
+  $("recState").textContent=REC.on?"● Ieraksts notiek: "+hms(Date.now()-REC.start)+" · "+REC.pts.length+" punkti · "+TK.count+" halzes":"Ieraksts nenotiek.";
+  sessCache=(await dbAll()).sort((a,b)=>b.start-a.start);
+  const L=$("sessList");L.innerHTML=sessCache.length?sessCache.map(o=>{const st=sessStats(o),dt=new Date(o.start);
+    return'<div class="srow'+(o.id===selSess?" sel":"")+'" data-id="'+o.id+'"><span><b>'+dt.toLocaleDateString("lv-LV")+" "+dt.toTimeString().slice(0,5)+'</b> · '+hms(st.dur*1000)+' · '+dec(st.d/1852,2)+' NM'+(o.status==="recording"?" · nepabeigts":"")+'</span><span>›</span></div>'}).join(""):'<p class="note">Vēl nav saglabātu braucienu.</p>';
+  const o=sessCache.find(x=>x.id===selSess);$("sessCard").hidden=!o;if(!o)return;
+  const st=sessStats(o),dt=new Date(o.start);$("sessTitle").textContent="Brauciens "+dt.toLocaleDateString("lv-LV")+" "+dt.toTimeString().slice(0,5);
+  const cell=(k,v)=>'<div class="ro"><span class="k">'+k+'</span><span class="v">'+v+'</span></div>';
+  $("sessStats").innerHTML=cell("Ilgums",hms(st.dur*1000))+cell("Nobraukts",dec(st.d/1852,2)+" NM")+cell("Vid. SOG",dec(st.avg,1)+" kn")+cell("Maks. SOG",dec(st.mx,1)+" kn")+cell("Halzes",st.tacks)+cell("Punkti",st.n);
+  drawSess(o)}
+$("sessList").addEventListener("click",e=>{const r=e.target.closest(".srow");if(!r)return;selSess=r.dataset.id;renderLogTab()});
+function drawSess(o){const cv=$("sessCv"),dpr=window.devicePixelRatio||1,W_=cv.clientWidth,H=cv.clientHeight;if(!W_)return;cv.width=W_*dpr;cv.height=H*dpr;const g=cv.getContext("2d");g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W_,H);
+  const P=o.pts.filter(x=>x.lat!=null);if(P.length<2)return;const o0=P[0],Q=P.map(x=>xy(x,o0));
+  let mnx=Math.min(...Q.map(a=>a.x)),mxx=Math.max(...Q.map(a=>a.x)),mny=Math.min(...Q.map(a=>a.y)),mxy=Math.max(...Q.map(a=>a.y));
+  const span=Math.max(mxx-mnx,mxy-mny,100)*1.15,cx=(mnx+mxx)/2,cy=(mny+mxy)/2,sc=Math.min(W_,H)/span,Pp=a=>[W_/2+(a.x-cx)*sc,H/2-(a.y-cy)*sc];
+  const mx=Math.max(...P.map(x=>x.sog||0),1);g.lineWidth=3;
+  for(let i=1;i<Q.length;i++){const f=(P[i].sog||0)/mx;g.strokeStyle="hsl("+Math.round(220-200*f)+",70%,50%)";g.beginPath();g.moveTo(...Pp(Q[i-1]));g.lineTo(...Pp(Q[i]));g.stroke()}
+  o.ev.filter(e=>e.e==="halze").forEach(e=>{const k=P.findIndex(x=>x.t>=e.t);if(k<0)return;const [x,y]=Pp(Q[k]);g.fillStyle=css("--fg");g.beginPath();g.arc(x,y,3.5,0,7);g.fill()});
+  g.fillStyle=css("--muted");g.font="11px "+css("--f-num");g.fillText("Krāsa: ātrums (zils lēni → sarkans ātri) · punkti: halzes",8,H-8)}
+function toCSV(o){const h="laiks_utc,lat,lon,sog_kn,cog_deg,novirze_no_halzes_deg,lift_deg,twd_deg,halze";return h+"\n"+o.pts.map(x=>[new Date(x.t).toISOString(),x.lat,x.lon,x.sog??"",x.cog??"",x.dev??"",x.lift??"",x.twd??"",x.tack].join(",")).join("\n")+"\n"}
+function toGPX(o){const pt=o.pts.filter(x=>x.lat!=null).map(x=>'<trkpt lat="'+x.lat+'" lon="'+x.lon+'"><time>'+new Date(x.t).toISOString()+'</time>'+(x.sog!=null?'<extensions><speed>'+(x.sog*KN).toFixed(2)+'</speed>'+(x.cog!=null?'<course>'+x.cog+'</course>':'')+'</extensions>':'')+'</trkpt>').join("\n");
+  return'<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Regates asistents" xmlns="http://www.topografix.com/GPX/1/1">\n<trk><name>'+new Date(o.start).toISOString()+'</name><trkseg>\n'+pt+'\n</trkseg></trk>\n</gpx>\n'}
+async function exportFile(name,text,mime){const msg=$("expMsg");
+  try{const dl=window.claude&&window.claude.use?await window.claude.use("downloads"):null;
+    if(dl){try{await dl.save({filename:name,data:text});msg.textContent="Saglabāts: "+name;return}catch(e){if(e&&e.code==="declined"){msg.textContent="Atcelts.";return}if(e&&e.code==="rejected_extension"){msg.textContent="Šis formāts šeit nav pieejams — izmanto telefona versiju vai CSV.";return}}}}catch(e){}
+  try{const f=new File([text],name,{type:mime});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:name});msg.textContent="Kopīgots: "+name;return}}catch(e){if(e&&e.name==="AbortError"){msg.textContent="Atcelts.";return}}
+  try{const u=URL.createObjectURL(new Blob([text],{type:mime}));const a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),5000);msg.textContent="Lejupielāde: "+name}catch(e){msg.textContent="Neizdevās saglabāt failu."}}
+const fname=(o,ext)=>"brauciens-"+new Date(o.start).toISOString().slice(0,16).replace(/[:T]/g,"-")+"."+ext;
+$("bExpCsv").onclick=()=>{const o=sessCache.find(x=>x.id===selSess);if(o)exportFile(fname(o,"csv"),toCSV(o),"text/csv")};
+$("bExpJson").onclick=()=>{const o=sessCache.find(x=>x.id===selSess);if(o)exportFile(fname(o,"json"),JSON.stringify(o),"application/json")};
+$("bExpGpx").onclick=()=>{const o=sessCache.find(x=>x.id===selSess);if(o)exportFile(fname(o,"gpx"),toGPX(o),"application/gpx+xml")};
+let delArm=0;
+$("bSessDel").onclick=async()=>{const n=Date.now();if(n-delArm>3000){delArm=n;$("bSessDel").textContent="Spied vēlreiz";setTimeout(()=>$("bSessDel").textContent="Dzēst",3000);return}await dbDel(selSess);selSess=null;$("bSessDel").textContent="Dzēst";renderLogTab()};
+
+/* ---------- AIS targets: Signal K WebSocket or simulation ---------- */
+live.ais={};
+function aisUpdate(mmsi,u){const a=live.ais[mmsi]||(live.ais[mmsi]={mmsi,name:"",hist:[],gaps:[]});Object.assign(a,u);a.t=u.t||Date.now();
+  if(a.lat!=null){const last=a.hist[a.hist.length-1];if(!last||a.t-last.t>=5000){a.hist.push({lat:a.lat,lon:a.lon,t:a.t});if(a.hist.length>240)a.hist.shift()}}}
+let skWs=null,skSelf=null,skState="izslēgts",skRetry=null;
+/* own instruments (Signal K SI units: m/s, rad; angleApparent + = wind from starboard) */
+const SK_SELF=["navigation.speedThroughWater","environment.wind.speedApparent","environment.wind.angleApparent","environment.wind.speedTrue","environment.wind.angleTrueWater","navigation.headingTrue","navigation.headingMagnetic","navigation.magneticVariation"],SKI={};
+function skInst(ups){const t=Date.now();ups.forEach(up=>(up.values||[]).forEach(v=>{if(typeof v.value==="number"&&isFinite(v.value))SKI[v.path]={v:v.value,t}}));
+  const g=p=>SKI[p]&&t-SKI[p].t<5000?SKI[p].v:null;const stw=g("navigation.speedThroughWater"),aws=g("environment.wind.speedApparent"),awa=g("environment.wind.angleApparent");
+  if(stw==null)return;let tws=null,twa=null,how;
+  /* preferred: true wind computed here from apparent wind + BSP, so it is always water-referenced even if the plotter uses SOG */
+  if(aws!=null&&awa!=null){const x=aws*Math.sin(awa),y=aws*Math.cos(awa)-stw;tws=Math.hypot(x,y);twa=Math.atan2(x,y);how="AW+BSP"}
+  else{tws=g("environment.wind.speedTrue");twa=g("environment.wind.angleTrueWater");how="TW"}
+  const hT=g("navigation.headingTrue"),hM=g("navigation.headingMagnetic"),mv=g("navigation.magneticVariation");
+  const hdg=hT!=null?hT/D2R:hM!=null?(hM+(mv||0))/D2R:null;
+  live.inst={bsp:stw/KN,tws:tws!=null?tws/KN:null,twa:twa!=null?twa/D2R:null,hdg,t,src:"inst",how};windUpdate(live.inst)}
+/* instrument wind: TWD = heading + TWA (water-referenced); fast (~15 s) and long (~5 min) averages; TWS ~10 s */
+live.wind=null;
+function windUpdate(I){if(I.tws==null)return;const t=I.t,W=live.wind,dt=W?(t-W.t)/1000:0,f=tau=>W&&dt<10?1-Math.exp(-dt/tau):1;
+  const tws=I.tws*(S.twsK||1),u=I.hdg!=null&&I.twa!=null?vec(wrap360(I.hdg+I.twa),1):null;
+  const mix=(o,n,k)=>o?{x:o.x+(n.x-o.x)*k,y:o.y+(n.y-o.y)*k}:n;
+  live.wind={t,src:I.src,tws:W?W.tws+(tws-W.tws)*f(10):tws,uF:u?mix(W&&W.uF,u,f(15)):W&&W.uF,uL:u?mix(W&&W.uL,u,f(300)):W&&W.uL,since:W&&W.since||t}}
+function liveWind(){const W=live.wind;return W&&Date.now()-W.t<5000?W:null}
+function TWS(){const W=liveWind();return W?W.tws:S.tws}
+function skConnect(){skClose();if(!S.skOn||!S.skUrl)return;skState="savienojas…";
+  try{skWs=new WebSocket(S.skUrl)}catch(e){skState="kļūda: "+e.message;return}
+  skWs.onopen=()=>{skState="savienots";skWs.send(JSON.stringify({context:"vessels.*",subscribe:[{path:"navigation.position",period:1000},{path:"navigation.courseOverGroundTrue",period:1000},{path:"navigation.speedOverGround",period:1000},{path:"name"},{path:""}]}));
+    skWs.send(JSON.stringify({context:"vessels.self",subscribe:SK_SELF.map(path=>({path,period:500}))}))};
+  skWs.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return}
+    if(m.self){skSelf=String(m.self).replace(/^vessels\./,"");return}
+    if(!m.context||!m.updates)return;
+    if(m.context==="vessels.self"||(skSelf&&m.context.replace(/^vessels\./,"")===skSelf)){if(has("instr"))skInst(m.updates);return}
+    const mm=(m.context.match(/mmsi:(\d+)/)||[])[1];if(!mm)return;const u={};
+    m.updates.forEach(up=>(up.values||[]).forEach(v=>{
+      if(v.path==="navigation.position"&&v.value){u.lat=v.value.latitude;u.lon=v.value.longitude}
+      else if(v.path==="navigation.courseOverGroundTrue")u.cog=v.value*180/Math.PI;
+      else if(v.path==="navigation.speedOverGround")u.sog=v.value;
+      else if(v.path==="name")u.name=v.value;
+      else if(v.path===""&&v.value&&v.value.name)u.name=v.value.name}));
+    aisUpdate(mm,u)};
+  skWs.onclose=()=>{skState=S.skOn?"atvienots — mēģina vēlreiz":"izslēgts";skWs=null;if(S.skOn)skRetry=setTimeout(skConnect,5000)};
+  skWs.onerror=()=>{skState="nevar savienoties"}}
+function skClose(){if(skRetry){clearTimeout(skRetry);skRetry=null}if(skWs){const w=skWs;skWs=null;w.onclose=null;try{w.close()}catch(e){}}skState=S.skOn?"atvienots":"izslēgts"}
+
+/* ---------- ORC polar ---------- */
+function P_(){return S&&S.polar&&S.polar.tws&&S.polar.tws.length>1?S.polar:EX_POLAR}
+function fullP(){const P=P_();return P.twa&&P.spd&&P.run&&P.gybe&&P.spd.length===P.twa.length?P:EX_POLAR}
+function itp(T,arr,x){let i=0;if(x<=T[0])i=0;else if(x>=T[T.length-1])i=T.length-2;else while(!(x>=T[i]&&x<=T[i+1]))i++;
+  const f=Math.max(0,Math.min(1,(x-T[i])/(T[i+1]-T[i])));return arr[i]+(arr[i+1]-arr[i])*f}
+function target(tws){const P=P_();const ang=itp(P.tws,P.ang,tws),vmg=itp(P.tws,P.vmg,tws);return{ang,vmg,bsp:vmg/Math.cos(ang*D2R)}}
+function runTarget(tws){const P=fullP();const g=itp(P.tws,P.gybe,tws),v=itp(P.tws,P.run,tws);return{ang:g,vmg:v,bsp:v/Math.abs(Math.cos(g*D2R))}}
+/* boat speed at any TWA: beat point → table rows 52°…150° → run point */
+function speedAt(twa,tws){const P=fullP(),b=target(tws),r=runTarget(tws);const pts=[[b.ang,b.bsp]];
+  P.twa.forEach((a,k)=>{if(a>b.ang+.5&&a<r.ang-.5)pts.push([a,itp(P.tws,P.spd[k],tws)])});pts.push([r.ang,r.bsp]);
+  if(twa<=pts[0][0])return pts[0][1];for(let k=0;k<pts.length-1;k++)if(twa<=pts[k+1][0]){const f=(twa-pts[k][0])/(pts[k+1][0]-pts[k][0]);return pts[k][1]+(pts[k+1][1]-pts[k][1])*f}
+  return pts[pts.length-1][1]}
+function parsePolar(txt){const rows={twa:[],spd:[]};const num=l=>(l.match(/\d+(?:[.,]\d+)?/g)||[]).map(x=>parseFloat(x.replace(",",".")));
+  txt.split(/\r?\n/).forEach(l=>{const k=l.toLowerCase().trim();
+    if(/wind velocity|true wind|vēja ātrums/.test(k))rows.tws=num(l);
+    else if(/beat angle/.test(k))rows.ang=num(l);
+    else if(/beat vmg/.test(k))rows.vmg=num(l);
+    else if(/run vmg/.test(k))rows.run=num(l);
+    else if(/gybe angle/.test(k))rows.gybe=num(l);
+    else{const m=k.match(/^(\d{2,3})\s*°/);if(m){const ns=num(l);rows.twa.push(ns[0]);rows.spd.push(ns.slice(1))}}});
+  if(!rows.tws||!rows.ang||!rows.vmg)return{err:"Neatradu rindas „Wind Velocity”, „Beat Angles” un „Beat VMG”."};
+  const n=rows.tws.length;if(n<2||rows.ang.length<n||rows.vmg.length<n)return{err:"Rindās par maz vērtību — pārbaudi, vai ielīmēta visa tabula."};
+  const out={tws:rows.tws,ang:rows.ang.slice(0,n),vmg:rows.vmg.slice(0,n)};
+  const okSpd=rows.spd.length>=2&&rows.spd.every(r=>r.length>=n);
+  if(okSpd&&rows.run&&rows.run.length>=n&&rows.gybe&&rows.gybe.length>=n){out.twa=rows.twa;out.spd=rows.spd.map(r=>r.slice(0,n));out.run=rows.run.slice(0,n);out.gybe=rows.gybe.slice(0,n)}
+  return out}
+
+/* ---------- course & leg solver ---------- */
+const mid=(a,b)=>({lat:(a.lat+b.lat)/2,lon:(a.lon+b.lon)/2});
+function item(i){const id=S.order[i];return id!=null&&S.marks[id]?S.marks[id]:null}
+function centerPt(m){return m.type==="mark"?m.p:mid(m.p,m.p2)}
+function itemPts(m){return m.type==="mark"?[m.p]:[m.p,m.p2]}
+function curVec(){return vec(S.curSet||0,(S.curKn||0)*KN)}
+/* 5° tolerance beyond the target angle (plus leeway upwind) so a boat sailing on the layline still reads as beat/run, not reach */
+function legType(b,w){const a=Math.abs(diff(b,w));return a<target(TWS()).ang+(S.leeway||0)+5?"beat":a>runTarget(TWS()).ang-5?"run":"reach"}
+function boardVecs(type,w){const c=curVec();
+  if(type==="beat"){if(S.laySrc==="tacks"&&S.tacks.S&&S.tacks.P)return{VS:vec(S.tacks.S.cog,S.tacks.S.sog*KN),VP:vec(S.tacks.P.cog,S.tacks.P.sog*KN),twa:null,bsp:null};
+    const t=target(TWS()),a=t.ang+(S.leeway||0);return{VS:add(vec(w-a,t.bsp*KN),c),VP:add(vec(w+a,t.bsp*KN),c),twa:t.ang,bsp:t.bsp}}
+  const r=runTarget(TWS());return{VS:add(vec(w-r.ang,r.bsp*KN),c),VP:add(vec(w+r.ang,r.bsp*KN),c),twa:r.ang,bsp:r.bsp}}
+/* straight leg: water heading that, with current, tracks straight to the mark */
+function reachVel(u,twa){const bsp=speedAt(twa,TWS())*KN,c=curVec(),cu=dot(c,u),cp={x:c.x-cu*u.x,y:c.y-cu*u.y},k=bsp*bsp-dot(cp,cp);if(k<=0)return null;
+  const along=Math.sqrt(k),Vw={x:-cp.x+along*u.x,y:-cp.y+along*u.y};return{V:add(Vw,c),gs:along+cu,bsp:bsp/KN,hdg:brg(Vw)}}
+/* one leg: D = t1·V1 + t2·V2 for beats and runs, straight line for reaches */
+function legSolve(Dv,w,board){const D=len(Dv),out={D,brg:brg(Dv)};if(D<1){out.type="reach";out.tot=0;out.sail=0;return out}
+  const u={x:Dv.x/D,y:Dv.y/D};out.type=legType(out.brg,w);
+  if(out.type!=="reach"){const bv=boardVecs(out.type,w),cur=board||"S",V1=cur==="S"?bv.VS:bv.VP,V2=cur==="S"?bv.VP:bv.VS,det=V1.x*V2.y-V1.y*V2.x;
+    Object.assign(out,{VS:bv.VS,VP:bv.VP,V1,V2,cur,twaT:bv.twa,bspT:bv.bsp});
+    if(Math.abs(det)>1e-6){const t1=(Dv.x*V2.y-Dv.y*V2.x)/det,t2=(V1.x*Dv.y-V1.y*Dv.x)/det;out.t1=t1;out.t2=t2;
+      if(t1>=0&&t2>=0){out.tot=t1+t2+(t1>1&&t2>1?S.loss:0);out.sail=t1*len(V1)+t2*len(V2);out.lay=t1;return out}
+      if(t1>0&&t2<0){const vm=dot(V1,u);if(vm>.1){out.tot=D/vm;out.sail=out.tot*len(V1);out.lay=0;out.fetch=true;out.over=t2<-15;return out}}
+      if(t1<0&&t2>0){const vm=dot(V2,u);if(vm>.1){out.tot=D/vm+S.loss;out.sail=(D/vm)*len(V2);out.lay=0;out.tackNow=true;return out}}}}
+  const rv=reachVel(u,Math.max(Math.abs(diff(out.brg,w)),target(TWS()).ang));
+  if(rv&&rv.gs>.1){out.direct=true;out.tot=D/rv.gs;out.sail=D;out.Vr=rv.V;out.hdg=rv.hdg;out.bspT=rv.bsp;out.twaT=Math.abs(diff(rv.hdg,w))}
+  return out}
+/* where to aim on this item: the mark itself, the quicker gate mark, or the nearest part of the finish line */
+function aimPoint(m,from,w){
+  if(m.type==="mark")return{pt:m.p,label:m.name};
+  if(m.type==="finish"){const A=xy(m.p,from),B=xy(m.p2,from),AB={x:B.x-A.x,y:B.y-A.y};let t=-dot(A,AB)/Math.max(1,dot(AB,AB));t=Math.max(.1,Math.min(.9,t));
+    return{pt:ll({x:A.x+AB.x*t,y:A.y+AB.y*t},from),label:m.name+" finišs"}}
+  let best=null;[m.p,m.p2].forEach(q=>{const r=legSolve(xy(q,from),w,null),t=r.tot!=null?r.tot:1e9;if(!best||t<best.t)best={pt:q,t}});
+  const sd=dot(xy(best.pt,centerPt(m)),vec(w+90,1))>0?"p":"s";return{pt:best.pt,label:m.name+sd}}
+function crossed(a,b,p1,p2){const A=xy(a,p1),B=xy(b,p1),Q=xy(p2,p1),cr=(u,v)=>u.x*v.y-u.y*v.x,r={x:B.x-A.x,y:B.y-A.y},den=cr(r,Q);if(Math.abs(den)<1e-9)return false;
+  const qp={x:-A.x,y:-A.y},t=cr(qp,Q)/den,uu=cr(qp,r)/den;return t>=0&&t<=1&&uu>=-.05&&uu<=1.05}
+function recenter(m,pt){if(m.type==="mark"){m.p=pt;return}const c=centerPt(m);m.p=ll(xy(m.p,c),pt);m.p2=ll(xy(m.p2,c),pt)}
+function mkItem(id,type,c,side,wid,w){if(type==="mark")return{id,name:id,type,p:c,side:side||"P"};
+  return{id,name:id,type,p:move(c,w+90,wid/2),p2:move(c,w-90,wid/2),side:type==="gate"?"G":"F"}}
+function buildCourse(tpl,Lnm,laps,fin){const W0=twd(),w=W0?W0.v:S.twd;if(w==null)return"Vispirms ievadi TWD iestatījumos.";
+  const p=pos(),B=S.cb&&S.pin?mid(S.cb,S.pin):(p?{lat:p.lat,lon:p.lon}:null);if(!B)return"Vajag starta līniju vai GPS pozīciju.";
+  if(tpl==="free"){S.marks={};S.order=[];S.leg=0;S.finished=false;save();return"Zīmes notīrītas — pievieno tās zemāk."}
+  const L=Lnm*1852,M={},order=[],one=move(B,w,L);
+  if(tpl==="wl"){M["1"]=mkItem("1","mark",one,"P");M["4"]=mkItem("4","gate",move(B,w,80),"G",60,w);
+    for(let i=0;i<laps;i++){order.push("1");if(i<laps-1||fin==="up")order.push("4")}}
+  else if(tpl==="trap"){M["1"]=mkItem("1","mark",one,"P");const two=move(one,w-120,L*2/3);M["2"]=mkItem("2","mark",two,"P");M["3"]=mkItem("3","gate",move(two,w+180,L),"G",60,w);
+    order.push("1","2","3");for(let i=1;i<laps;i++)order.push("2","3")}
+  else if(tpl==="tri"){M["1"]=mkItem("1","mark",one,"P");M["2"]=mkItem("2","mark",move(B,w-60,L),"P");M["3"]=mkItem("3","mark",move(B,w,80),"P");
+    for(let i=0;i<laps;i++)order.push("1","2","3")}
+  if(fin==="start")M.F=S.cb&&S.pin?{id:"F",name:"F",type:"finish",p:S.pin,p2:S.cb,side:"F",ref:"start"}:Object.assign(mkItem("F","finish",B,"F",150,w),{ref:"start"});
+  else if(fin==="up")M.F=mkItem("F","finish",move(move(one,w+180,120),w-90,150),"F",120,w);
+  else M.F=mkItem("F","finish",B,"F",150,w);
+  order.push("F");S.marks=M;S.order=order;S.leg=0;S.finished=false;S.inZone=false;save();return"Distance izveidota: "+order.join(" → ")}
+
+/* ---------- wind ---------- */
+function syncStart(){if(!S.cb||!S.pin)return;Object.values(S.marks).forEach(m=>{if(m.ref==="start"){m.p=S.pin;m.p2=S.cb}})}
+function twd(){const L=liveWind();if(L&&L.uF&&S.twdSrc!=="manual")return{v:brg(L.uF),src:L.src==="sim"?"SIM":"B&G"};const T=S.tacks;if(S.twdSrc==="auto"&&T.S&&T.P)return{v:circMean(T.S.cog,T.P.cog),src:"halzes"};if(S.twd!=null)return{v:S.twd,src:"manuāli"};return null}
+
+/* ---------- start sequence ---------- */
+const PREP={P:"P",I:"I",Z:"Z",U:"U",B:"melno karogu"};
+const PREP_NOTE={I:"I: pēdējā minūtē OCS jāapbrauc līnijas gals (RRS 30.1).",Z:"Z: OCS trijstūrī pēdējā minūtē — 20% sods (RRS 30.2).",U:"U: OCS trijstūrī pēdējā minūtē — DSQ bez pārstarta tiesībām (RRS 30.3).",B:"Melnais: OCS trijstūrī pēdējā minūtē — DSQ, numurs tiek publicēts (RRS 30.4)."};
+const W=()=>(S.seq.type==="3"?3:5)*MIN;
+function schedule(){const q=S.seq,out=[];if(!q.running)return out;const w=W();
+  for(let k=0;k<q.n;k++){const s=q.t0+k*w,c=q.offset+k+1,wa=s-w;
+    out.push({t:wa,k,kind:"warn",txt:"Brīdinājums: pacelt klases "+c+" karogu",snd:"1"});
+    out.push({t:wa+MIN,k,kind:"prep",txt:"Sagatavošanās: pacelt "+PREP[q.prep],snd:"1"});
+    out.push({t:s-MIN,k,kind:"one",txt:"1 minūte: nolaist "+PREP[q.prep],snd:"L"});
+    out.push({t:s,k,kind:"start",txt:"STARTS: nolaist klases "+c+" karogu",snd:"1"})}
+  return out.sort((a,b)=>a.t-b.t)}
+function starts(){const q=S.seq,w=W(),a=[];for(let k=0;k<q.n;k++)a.push(q.t0+k*w);return a}
+function addLog(t){const q=S.seq;const d=new Date();q.log.unshift(d.toTimeString().slice(0,8)+" — "+t);q.log=q.log.slice(0,30);save();renderLog()}
+function renderLog(){const el=$("log");el.textContent="";S.seq.log.forEach(l=>{const li=document.createElement("li");li.textContent=l;el.appendChild(li)})}
+let lastTick=Date.now(), beepFired=new Set();
+function beginSeq(warnAt){const q=S.seq;q.t0=warnAt+W();q.running=true;q.ap=false;q.fs=false;q.xUntil=0;lastTick=Date.now()-1;beepFired.clear();save()}
+
+/* ---------- flags (signal flags drawn as SVG) ---------- */
+const FLAG={
+  K:c=>`<svg viewBox="0 0 30 20"><rect width="30" height="20" fill="#0B6E99"/><text x="15" y="14" font-size="10" font-family="sans-serif" font-weight="700" text-anchor="middle" fill="#fff">${c}</text></svg>`,
+  P:()=>`<svg viewBox="0 0 30 20"><rect width="30" height="20" fill="#1D3E9B"/><rect x="10" y="6.5" width="10" height="7" fill="#fff"/></svg>`,
+  I:()=>`<svg viewBox="0 0 30 20"><rect width="30" height="20" fill="#F5C400"/><circle cx="15" cy="10" r="5.5" fill="#111"/></svg>`,
+  Z:()=>`<svg viewBox="0 0 30 20"><path d="M0 0H30L15 10Z" fill="#F5C400"/><path d="M0 0V20L15 10Z" fill="#111"/><path d="M30 0V20L15 10Z" fill="#1D3E9B"/><path d="M0 20H30L15 10Z" fill="#D2232A"/></svg>`,
+  U:()=>`<svg viewBox="0 0 30 20"><rect width="30" height="20" fill="#fff"/><rect width="15" height="10" fill="#D2232A"/><rect x="15" y="10" width="15" height="10" fill="#D2232A"/></svg>`,
+  B:()=>`<svg viewBox="0 0 30 20"><rect width="30" height="20" fill="#111"/></svg>`,
+  X:()=>`<svg viewBox="0 0 30 20"><rect width="30" height="20" fill="#fff"/><rect x="12" width="6" height="20" fill="#1D3E9B"/><rect y="7" width="30" height="6" fill="#1D3E9B"/></svg>`,
+  AP:()=>`<svg viewBox="0 0 30 20"><defs><clipPath id="apc"><path d="M0 0L30 6V14L0 20Z"/></clipPath></defs><g clip-path="url(#apc)"><rect width="30" height="20" fill="#fff"/><rect x="0" width="6" height="20" fill="#D2232A"/><rect x="12" width="6" height="20" fill="#D2232A"/><rect x="24" width="6" height="20" fill="#D2232A"/></g></svg>`,
+  FS:()=>`<svg viewBox="0 0 30 20"><path d="M0 0L30 10L0 20Z" fill="#1D3E9B"/><path d="M0 5L16 10L0 15Z" fill="#F5C400"/></svg>`};
+function flagChip(svg,name){return`<span class="flag">${svg}<span>${name}</span></span>`}
+
+/* ---------- UI: tabs ---------- */
+document.querySelectorAll(".tabs button").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected",x===b?"true":"false"));
+  ["p-inst","p-mark","p-ais","p-log","p-set"].forEach(id=>$(id).hidden=id!==b.dataset.p);if(b.dataset.p==="p-log")renderLogTab();if(b.dataset.p==="p-ais")renderAis();if(b.dataset.p==="p-mark"){renderCourseEditor();drawPlot()}if(b.dataset.p==="p-set")fillSettings()}));
+
+/* ---------- buttons: start ---------- */
+/* Idle: press exactly at the signal you hear; the button says how many minutes remain to the (first) start at that signal. */
+["bSig1","bSig2","bSig3"].forEach(id=>{$(id).onclick=()=>{const m=+$(id).dataset.m,now=Date.now();beginSeq(now+m*MIN-W());
+  addLog("Sinhronizēts: signāls = "+m+":00 līdz startam")}});
+function idleLabels(){const three=S.seq.type==="3";const ms=three?[3,2,1]:[5,4,1];
+  ["bSig1","bSig2","bSig3"].forEach((id,i)=>{$(id).dataset.m=ms[i];$(id).textContent=(i<2?"Signāls tagad = ":"= ")+ms[i]+":00"})}
+/* Running: the press always comes a little after the signal, so snap DOWN to the next whole minute (2:52 → 2:00).
+   3 s grace: 2:58 is treated as a late press on the 3:00 signal → 3:00. */
+$("bSync").onclick=()=>{const q=S.seq,now=Date.now();
+  if(!q.running)return;
+  const st=starts().find(s=>s>now-2000);if(st==null)return;const k=starts().indexOf(st);const rem=st-now;const GRACE=3000;let r=Math.floor(rem/MIN)*MIN;if(rem-r>MIN-GRACE)r+=MIN;
+  q.t0+=(now+r)-st;lastTick=now;save();addLog("Sinhronizēts: "+mmss(r)+" līdz klases "+(q.offset+k+1)+" startam")};
+$("bMinus").onclick=()=>{if(S.seq.running){S.seq.t0-=MIN;lastTick=Date.now();save()}};
+$("bPlus").onclick=()=>{if(S.seq.running){S.seq.t0+=MIN;lastTick=Date.now();save()}};
+let stopArm=0;
+$("bStop").onclick=()=>{const now=Date.now();if(now-stopArm>3000){stopArm=now;$("bStop").textContent="Apstiprināt";setTimeout(()=>{$("bStop").textContent="Apturēt"},3000);return}
+  S.seq.running=false;S.seq.ap=false;S.seq.fs=false;S.seq.xUntil=0;S.seq.offset=0;save();$("bStop").textContent="Apturēt";addLog("Procedūra apturēta")};
+$("bAP").onclick=()=>{const q=S.seq;
+  if(!q.ap){q.ap=true;q.running=false;sound("2");save();addLog("AP pacelts — starts atlikts (2 signāli)")}
+  else{q.ap=false;sound("1");beginSeq(Date.now()+MIN);addLog("AP nolaists (1 signāls) — brīdinājums pēc 1 min")}};
+$("bFS").onclick=()=>{const q=S.seq,now=Date.now();
+  if(!q.fs){const st=starts();let k=-1;st.forEach((s,i)=>{if(s<=now)k=i});if(!q.running||k<0){addLog("Vispārējā atsaukšana iespējama tikai pēc starta");return}
+    q.offset+=k;q.n=Math.max(1,q.n-k);q.fs=true;q.running=false;q.xUntil=0;sound("2");save();addLog("1. aizstājējs pacelts — vispārējā atsaukšana (2 signāli)")}
+  else{q.fs=false;sound("1");beginSeq(now+MIN);addLog("1. aizstājējs nolaists (1 signāls) — brīdinājums pēc 1 min")}};
+$("bX").onclick=()=>{const q=S.seq,now=Date.now();
+  if(q.xUntil>now){q.xUntil=0;save();addLog("X nolaists");return}
+  const st=starts();let last=null,next=null;st.forEach(s=>{if(s<=now)last=s;else if(next==null)next=s});
+  if(!q.running||last==null||now-last>4*MIN){addLog("X lieto tikai pirmajās 4 min pēc starta");return}
+  let u=last+4*MIN;if(next!=null)u=Math.min(u,next-MIN);q.xUntil=u;sound("1");save();addLog("X pacelts — individuālā atsaukšana (1 signāls)")};
+$("bCB").onclick=()=>{const p=pos();if(!p)return;S.cb={lat:p.lat,lon:p.lon};syncStart();save();addLog("Komitejas gals saglabāts")};
+$("bPin").onclick=()=>{const p=pos();if(!p)return;S.pin={lat:p.lat,lon:p.lon};syncStart();save();addLog("Pin gals saglabāts")};
+
+/* ---------- buttons: mark ---------- */
+function recordTack(side){const v=velocity(20000);if(!v){$("mMsg").textContent="Vajag vismaz 5 s GPS datu. Pamēģini vēlreiz.";return}
+  S.tacks[side]={cog:brg(v),sog:len(v)/KN};save();renderMark()}
+$("bTS").onclick=()=>recordTack("S");
+$("bTP").onclick=()=>recordTack("P");
+$("bMark").onclick=()=>{const p=pos(),m=item(S.leg);if(!p)return;if(!m){$("mMsg").textContent="Vispirms izveido distanci.";return}
+  recenter(m,{lat:p.lat,lon:p.lon});save();renderMark();renderCourseEditor()};
+$("bSimTack").onclick=()=>{sim.board=sim.board==="S"?"P":"S"};
+$("bPrev").onclick=()=>advance(-1,false);
+$("bNext").onclick=()=>advance(1,false);
+$("seqChips").addEventListener("click",e=>{const b=e.target.closest("button[data-i]");if(!b)return;S.leg=+b.dataset.i;S.finished=false;S.inZone=false;save();renderMark()});
+function advance(k,auto){if(!S.order.length)return;
+  if(auto&&S.leg>=S.order.length-1){S.finished=true;addLog("Pēdējā zīme apņemta");save();renderMark();return}
+  S.leg=Math.max(0,Math.min(S.order.length-1,S.leg+k));S.inZone=false;S.finished=false;save();
+  if(auto){addLog("Zīme apņemta — nākamā: "+(item(S.leg)?item(S.leg).name:""));beep(true)}renderMark()}
+let prevP=null;
+function courseTick(){const p=pos(),w=twd();const m=item(S.leg);
+  if(!p||!w||S.finished||!m){prevP=p;return}
+  if(m.type==="finish"){if(prevP&&prevP.t!==p.t&&crossed(prevP,p,m.p,m.p2)){S.finished=true;addLog("FINIŠS"+(S.raceStart?" — brauciena laiks "+mmss(p.t-S.raceStart):""));sound("1");save();recEvent("finišs");setTimeout(()=>recStop("finišs"),15000)}prevP=p;return}
+  /* rounded = was in the zone and then either moves away, or the bearing to the mark has swung more than 100° (passed abeam and round) */
+  let d=1e9,q0=null;itemPts(m).forEach(q=>{const dd=len(xy(q,p));if(dd<d){d=dd;q0=q}});const bq=brg(xy(q0,p));
+  if(d<S.zone||S.inZone){if(!S.inZone){S.inZone=true;S.minD=d;S.zBrg=bq}S.minD=Math.min(S.minD,d);
+    if(d>S.minD+15||d>S.zone+10||Math.abs(diff(bq,S.zBrg))>100)advance(1,true)}
+  prevP=p}
+/* course editor */
+function renderCourseEditor(){const L=$("mkList");const ids=Object.keys(S.marks);
+  if(!ids.length){L.innerHTML='<p class="note">Zīmju vēl nav. Izveido distanci no veidnes vai pievieno zīmes.</p>'}
+  else L.innerHTML=ids.map(id=>{const m=S.marks[id];const t=m.type==="mark"?(m.side==="S"?"zīme · labais borts":"zīme · kreisais borts"):m.type==="gate"?"vārti":"finiša līnija";
+    const wid=m.type==="mark"?"":" · "+Math.round(len(xy(m.p2,m.p)))+" m";
+    return'<div class="mrow"><b>'+esc(m.name)+'</b><span class="meta">'+t+wid+'<br>'+fmtLL(centerPt(m))+'</span><button class="small" data-here="'+esc(id)+'">Šeit</button><button class="small" data-edit="'+esc(id)+'">Labot</button><button class="small danger" data-del="'+esc(id)+'">Dzēst</button></div>'}).join("");
+  $("aSeq").value=S.order.join(" ");$("aZone").value=S.zone;
+  const f=$("aFrom"),cur=f.value;f.innerHTML='<option value="_cb">Komitejas kuģa</option><option value="_me">Manas pozīcijas</option>'+ids.map(id=>'<option value="'+esc(id)+'">Zīmes '+esc(S.marks[id].name)+'</option>').join("");if(cur)f.value=cur}
+function esc(t){return String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+$("mkList").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.del){const id=b.dataset.del;delete S.marks[id];S.order=S.order.filter(x=>x!==id);S.leg=Math.min(S.leg,Math.max(0,S.order.length-1));save();renderCourseEditor();renderMark()}
+  else if(b.dataset.here){const p=pos();if(!p)return;recenter(S.marks[b.dataset.here],{lat:p.lat,lon:p.lon});save();renderCourseEditor();renderMark()}
+  else if(b.dataset.edit){const m=S.marks[b.dataset.edit];$("aName").value=m.name;$("aType").value=m.type;$("aSide").value=m.side==="S"?"S":"P";$("aMeth").value="ll";
+    llSet("a",centerPt(m));if(m.type!=="mark")$("aWid").value=Math.round(len(xy(m.p2,m.p)));
+    methUI();b.closest(".card").querySelector("details").open=true;$("aName").focus()}});
+function methUI(){const m=$("aMeth").value;$("aLL").hidden=m!=="ll";$("aBR").hidden=m!=="brg"}
+$("aMeth").onchange=methUI;
+$("bAdd").onclick=()=>{const name=$("aName").value.trim();if(!name){$("crsMsg").textContent="Ievadi zīmes nosaukumu.";return}
+  const W0=twd(),w=W0?W0.v:(S.twd!=null?S.twd:0);let c=null;const meth=$("aMeth").value;
+  if(meth==="ll")c=llGet("a");
+  else if(meth==="here"){const p=pos();if(p)c={lat:p.lat,lon:p.lon}}
+  else{const b=num("aBrg"),d=num("aNm"),fr=$("aFrom").value;let o=null;if(fr==="_cb")o=S.cb;else if(fr==="_me"){const p=pos();o=p?{lat:p.lat,lon:p.lon}:null}else if(S.marks[fr])o=centerPt(S.marks[fr]);
+    if(o&&b!=null&&d!=null)c=move(o,b,d*1852)}
+  if(!c){$("crsMsg").textContent="Pozīcija nav noteikta — pārbaudi ievadītos datus.";return}
+  const type=$("aType").value,wid=Math.max(10,num("aWid")||60);
+  S.marks[name]=mkItem(name,type,c,$("aSide").value,wid,w);
+  if(!S.order.includes(name)){const fi=S.order.lastIndexOf("F");if(type!=="finish"&&fi===S.order.length-1&&fi>=0)S.order.splice(fi,0,name);else S.order.push(name)}
+  save();renderCourseEditor();renderMark();$("crsMsg").textContent="Zīme "+name+" saglabāta: "+fmtLL(c)};
+$("bSeq").onclick=()=>{const ids=$("aSeq").value.split(/[\s,;→>-]+/).filter(Boolean);const bad=ids.filter(id=>!S.marks[id]);
+  if(bad.length){$("crsMsg").textContent="Nav tādas zīmes: "+bad.join(", ");return}
+  S.order=ids;S.leg=0;S.finished=false;S.inZone=false;const z=num("aZone");if(z!=null)S.zone=Math.max(10,Math.min(200,z));save();renderMark();$("crsMsg").textContent="Secība saglabāta: "+ids.join(" → ")};
+$("bTpl").onclick=()=>{const msg=buildCourse($("tTpl").value,num("tLen")||1,+$("tLaps").value,$("tFin").value);$("crsMsg").textContent=msg;renderCourseEditor();renderMark()};
+
+/* ---------- settings ---------- */
+function polTable(){const P=S.polar,t=$("polTbl");const row=(h,a,f)=>"<tr><td>"+h+"</td>"+a.map(x=>"<td>"+f(x)+"</td>").join("")+"</tr>";
+  let h=row("TWS kn",P.tws,x=>dec(x,0))+row("Beat Angle",P.ang,x=>dec(x,1)+"°")+row("Beat VMG",P.vmg,x=>dec(x,2))+row("Beat BSP",P.tws.map((x,i)=>P.vmg[i]/Math.cos(P.ang[i]*D2R)),x=>dec(x,2));
+  if(P.twa&&P.spd)P.twa.forEach((a,k)=>{h+=row(a+"°",P.spd[k],x=>dec(x,2))});
+  if(P.run)h+=row("Run VMG",P.run,x=>dec(x,2));if(P.gybe)h+=row("Gybe Angle",P.gybe,x=>dec(x,1)+"°");
+  t.innerHTML=h;$("polNote").textContent=(fullP()===P?"Pilna polāru tabula — rēķina augšvēju, sānvēju un pa vējam. ":"Uzmanību: šai jahtai ielasītas tikai augšvēja rindas — sānvējam un pa vējam izmanto Gabriel datus. ")+"Starp TWS un TWA vērtībām interpolē lineāri. Straume „uz” — virziens, uz kuru tā plūst."}
+function fillInstSettings(){const opts=Object.entries(METRICS).map(([k,m])=>'<option value="'+k+'">'+m.l+'</option>').join("");
+  if(!$("sC1").options.length){$("sC1").innerHTML=opts;$("sC2").innerHTML=opts}
+  $("sC1").value=S.c1;$("sC2").value=S.c2;$("sCB").value=S.cbar;$("sDay").checked=!!S.day;$("sBow").value=S.bow||0}
+$("bInstSave").onclick=()=>{S.c1=$("sC1").value;S.c2=$("sC2").value;S.cbar=$("sCB").value;S.day=$("sDay").checked;
+  const b=parseFloat(String($("sBow").value).replace(",","."));S.bow=isFinite(b)?Math.max(0,Math.min(15,b)):0;save();$("setMsg").textContent="Ekrāna iestatījumi saglabāti."};
+function fillSettings(){fillInstSettings();$("sLic").value=S.license;$("sSkUrl").value=S.skUrl||"";$("sSkOn").checked=!!S.skOn;$("sLay").value=S.laySrc;$("sTws").value=S.tws;$("sLee").value=S.leeway;$("sTwsK").value=dec(S.twsK||1,2);$("sPolName").value=S.polar.name||"";$("sCurSet").value=Math.round(S.curSet);$("sCurKn").value=S.curKn;polTable();$("sType").value=S.seq.type;$("sN").value=String(S.seq.n);$("sPrep").value=S.seq.prep;$("sLoss").value=S.loss;
+  $("sHorn").checked=S.horn;$("sBeep").checked=S.beep;$("sTwd").value=S.twd==null?"":Math.round(S.twd);$("sTwdSrc").value=S.twdSrc;$("sSim").checked=S.sim;
+  llSet("cb",S.cb);llSet("pin",S.pin)}
+$("sType").onchange=e=>{S.seq.type=e.target.value;save();idleLabels()};
+$("sN").onchange=e=>{S.seq.n=+e.target.value;S.seq.offset=0;save()};
+$("sPrep").onchange=e=>{S.seq.prep=e.target.value;save()};
+$("sLoss").onchange=e=>{S.loss=Math.max(0,+e.target.value||0);save()};
+$("sHorn").onchange=e=>{S.horn=e.target.checked;save()};
+$("sBeep").onchange=e=>{S.beep=e.target.checked;save()};
+$("sTwdSrc").onchange=e=>{S.twdSrc=e.target.value;save()};
+$("sLay").onchange=e=>{S.laySrc=e.target.value;save();renderMark()};
+$("bOrc").onclick=()=>{const g=(id,d)=>{const v=parseFloat(String($(id).value).replace(",","."));return isFinite(v)?v:d};
+  S.tws=Math.max(0,g("sTws",S.tws));S.leeway=g("sLee",S.leeway);S.twsK=Math.max(.7,Math.min(1.3,g("sTwsK",S.twsK||1)));S.curSet=wrap360(g("sCurSet",S.curSet));S.curKn=Math.max(0,g("sCurKn",S.curKn));S.polar.name=$("sPolName").value;save();renderMark();$("setMsg").textContent="ORC iestatījumi saglabāti."};
+$("bPaste").onclick=()=>{const r=parsePolar($("sPaste").value);if(r.err){$("setMsg").textContent=r.err;return}
+  S.polar=Object.assign({name:$("sPolName").value?$("sPolName").value:"Mana jahta"},r);save();fillSettings();renderMark();$("setMsg").textContent="Polāras ielasītas: "+r.tws.length+" vēja ātrumi"+(r.twa?", "+r.twa.length+" TWA rindas, Run VMG un Gybe.":" (tikai augšvējš).")};
+$("twsM").onclick=()=>{S.tws=Math.max(1,Math.round(S.tws)-1);save();renderMark()};
+$("twsP").onclick=()=>{S.tws=Math.round(S.tws)+1;save();renderMark()};
+$("bCur").onclick=()=>{const v=velocity(60000),w=twd();if(!v||!w){$("mMsg").textContent="Vajag vismaz 5 s GPS datu un TWD.";return}
+  if(markCalc&&markCalc.type&&markCalc.type!=="beat"){$("mMsg").textContent="Straumi novērtē augšvēja posmā, burājot ar mērķa leņķi.";return}
+  const st=diff(w.v,brg(v))>=0;const tg=target(TWS()),a=tg.ang+(S.leeway||0);const Vw=vec(st?w.v-a:w.v+a,tg.bsp*KN);const c={x:v.x-Vw.x,y:v.y-Vw.y};
+  S.curSet=brg(c);S.curKn=Math.round(len(c)/KN*10)/10;save();renderMark();$("mMsg").textContent="Straume: uz "+deg(S.curSet)+", "+dec(S.curKn,1)+" kn"};
+$("bTwd").onclick=()=>{const v=parseFloat($("sTwd").value);if(isFinite(v)){S.twd=wrap360(v);save();$("setMsg").textContent="Vēja virziens saglabāts: "+deg(S.twd)}};
+const num=id=>{const v=parseFloat(String($(id).value).replace(",","."));return isFinite(v)?v:null};
+$("bCoords").onclick=()=>{const g=(a,b)=>{const la=num(a),lo=num(b);return la!=null&&lo!=null&&Math.abs(la)<=90&&Math.abs(lo)<=180?{lat:la,lon:lo}:null};
+  const cb=llGet("cb"),pin=llGet("pin");if(cb)S.cb=cb;if(pin)S.pin=pin;syncStart();save();$("setMsg").textContent="Koordinātas saglabātas."};
+$("sLic").onchange=e=>{S.license=e.target.value;save();applyLocks();if(!has("instr")&&!has("ais")){S.skOn=false;skClose()}renderMark()};
+$("sSkOn").onchange=e=>{S.skOn=e.target.checked;S.skUrl=$("sSkUrl").value.trim();save();S.skOn?skConnect():skClose()};
+$("sSkUrl").onchange=e=>{S.skUrl=e.target.value.trim();save();if(S.skOn)skConnect()};
+$("sSim").onchange=e=>{S.sim=e.target.checked;save();applySource()};
+$("bSample").onclick=()=>{loadSample();fillSettings();renderCourseEditor();$("setMsg").textContent="Parauga distance ielādēta: Rīgas līcis, vējš 230°, vējš–aizvējš 1 NM, 2 apļi."};
+let resetArm=0;
+$("bReset").onclick=()=>{const now=Date.now();if(now-resetArm>3000){resetArm=now;$("bReset").textContent="Spied vēlreiz, lai dzēstu";setTimeout(()=>{$("bReset").textContent="Dzēst visus datus"},3000);return}
+  try{localStorage.removeItem("regate-v1")}catch(e){}S=structuredClone(DEF);S.sim=false;save();fillSettings();applySource();renderLog();$("bReset").textContent="Dzēst visus datus";$("setMsg").textContent="Dati dzēsti."};
+function applySource(){if(S.sim)startSim();else{stopSim();live.hist=[];live.track=[];live.src="none";startGPS()}$("simBadge").hidden=!S.sim;$("bSimTack").hidden=!S.sim}
+
+/* ---------- render: status ---------- */
+function renderStatus(){const v=velocity();const dotEl=$("gpsDot");
+  if(live.src==="sim"){dotEl.className="dot sim";$("gpsTxt").textContent="SIM"}
+  else if(live.src==="gps"&&pos()&&Date.now()-pos().t<5000){dotEl.className="dot ok";$("gpsTxt").textContent="±"+Math.round(live.acc||0)+" m"}
+  else{dotEl.className="dot";$("gpsTxt").textContent=live.err||"Gaida GPS…"}
+  $("stSog").textContent=v?dec(len(v)/KN,1):"–";$("stBsp").textContent=live.perf?(live.perf.src==="gps"?"≈":"")+dec(live.perf.bspS,1):"–";$("stCog").textContent=v&&len(v)>.3?deg(brg(v)).replace("°",""):"–";
+  const w=twd();$("stTwd").textContent=w?deg(w.v).replace("°",""):"–"}
+
+/* ---------- render: start ---------- */
+function renderStart(now){const q=S.seq,flags=[];let label="Starta procedūra",clock="–:––",sub=(q.type==="3"?"3-2-1-0":"5-4-1-0 · RRS 26")+(q.n>1?" · "+q.n+" klases":""),next="",urgent=false,remain=null;
+  if(q.ap){flags.push(flagChip(FLAG.AP(),"AP"));label="Starts atlikts";clock="AP";next="Nolaižot AP (1 signāls), brīdinājums sekos pēc 1 min."}
+  else if(q.fs){flags.push(flagChip(FLAG.FS(),"1. aizstājējs"));label="Vispārējā atsaukšana";clock="1. AIZST.";next="Nolaižot (1 signāls), brīdinājums sekos pēc 1 min."}
+  else if(q.running){const st=starts(),w=W(),sch=schedule();
+    const ni=st.findIndex(s=>s>now);
+    if(ni>=0){const s=st[ni],c=q.offset+ni+1;remain=s-now;
+      if(now<s-w){label="Līdz brīdinājumam · klase "+c;clock=mmss(s-w-now)}else{label="Līdz startam · klase "+c;clock=mmss(remain)}
+      urgent=remain<=MIN&&now>=s-w}
+    else{const s=st[st.length-1];label="Pēc starta · klase "+(q.offset+st.length);clock=mmss(now-s,true)}
+    st.forEach((s,k)=>{const c=q.offset+k+1;if(now>=s-w&&now<s)flags.push(flagChip(FLAG.K(c),"Klase "+c));
+      if(now>=s-w+MIN&&now<s-MIN)flags.push(flagChip(FLAG[q.prep](),q.prep==="B"?"Melnais":q.prep))});
+    const ns=sch.find(x=>x.t>now);if(ns){const snd=ns.snd==="L"?"1 garš signāls":"1 signāls";next="Pēc "+mmss(ns.t-now)+" — "+ns.txt+" · "+snd}else next="Visi starti notikuši.";
+    if(PREP_NOTE[q.prep]&&ni>=0)sub+=" · "+PREP_NOTE[q.prep];if(ni>=0&&(!S.cb||!S.pin))sub+=" · Uzņem līniju: "+(!S.pin?"PIN":"")+(!S.pin&&!S.cb?" un ":"")+(!S.cb?"RC":"")}
+  if(q.xUntil>now)flags.push(flagChip(FLAG.X(),"X līdz "+mmss(q.xUntil-now)));
+  CLK={clock:q.running||q.ap||q.fs?clock:mmss(W()),urgent,remain,label,idle:!q.running&&!q.ap&&!q.fs,after:q.running&&remain==null?now-starts()[starts().length-1]:null};
+  $("rowIdle").hidden=q.running||q.ap||q.fs;$("rowRun").hidden=!q.running||q.ap||q.fs;
+  $("clkLabel").textContent=label;$("clock").textContent=clock;$("clock").classList.toggle("urgent",urgent);$("clkSub").textContent=sub;
+  if(next)$("nextSig").textContent=next;else if(!q.running)$("nextSig").textContent="Nospied pogu tieši signāla brīdī — 5:00 brīdinājumam, 4:00 sagatavošanās, 1:00 pēdējai minūtei.";
+  const fh=flags.join("");if($("flags").dataset.h!==fh){$("flags").innerHTML=fh;$("flags").dataset.h=fh}
+  renderLine(now,remain)}
+
+function renderLine(now,remain){const p=pos(),v=velocity(),set=(id,t,c)=>{const e=$(id);e.textContent=t;e.className="v"+(id==="lDist"||id==="lTtl"?" big":"")+(c?" "+c:"")};
+  if(!S.cb||!S.pin){["lDist","lTtl","lBurn","lFav","lBias","lLen"].forEach(id=>set(id,"–"));return}
+  const o=S.pin,C=xy(S.cb,o),L=len(C);set("lLen",dist(L));
+  /* Convention: looking from the pre-start side toward the course, pin is the LEFT end and the committee boat the RIGHT end.
+     So the course side is C (pin→committee) rotated 90° counter-clockwise. Works without any wind input. */
+  const n={x:-C.y/L,y:C.x/L};
+  const w=twd();
+  if(!w){set("lFav","vējš?");set("lBias","–")}
+  else{const up=vec(w.v,1);/* toward where the wind comes from */
+    if(dot(n,up)<0.2){set("lFav","Pārbaudi galus","bad");set("lBias","–")}
+    else{const adv=dot(C,up);/* >0 committee end is upwind */
+      set("lFav",(adv>=0?"Komiteja":"Pin")+" +"+Math.round(Math.abs(adv))+" m",Math.abs(adv)>5?"warn":"");
+      set("lBias",dec(Math.abs(diff(brg(n),w.v)),0)+"°")}}
+  if(!p){set("lDist","–");set("lTtl","–");set("lBurn","–");return}
+  const B=xy(p,o);
+  const d=dot(B,n);const ocs=d>0&&remain!=null&&remain>0;set("lDist",(d>0?"+":"")+dist(d).replace(/^(\d)/,"$1"),ocs?"bad":"");
+  const vn=v?dot(v,n):0;
+  if(d<0&&vn>.2){const ttl=-d/vn*1000;set("lTtl",mmss(ttl));if(remain!=null&&remain>0){const b=remain-ttl;set("lBurn",mmss(b,true),b<0?"bad":b<10000?"warn":"good")}else set("lBurn","–")}
+  else{set("lTtl",d>=0?"aiz līnijas":"–",d>=0&&ocs?"bad":"");set("lBurn","–")}}
+
+/* ---------- start sequence tick (sounds) ---------- */
+function seqTick(now){const q=S.seq;
+  if(q.running&&!q.ap&&!q.fs){const sch=schedule();const fired=new Set();
+    sch.forEach(s=>{if(s.t>lastTick&&s.t<=now){if(!fired.has(s.t)){sound(s.snd);fired.add(s.t)}addLog(s.txt);if(s.kind==="start"&&s.k===0){recStart(s.t);S.leg=0;S.finished=false;S.inZone=false;S.raceStart=s.t;Object.values(live.ais).forEach(a=>{a.leg=0;a.inZone=false;a.gaps=[]});save()}}});
+    const st=starts().find(s=>s>now);if(st!=null){const r=Math.ceil((st-now)/1000);
+      const key=st+":"+r;if((r===60||r===30||r<=10&&r>=1)&&!beepFired.has(key)&&r*1000>=st-now-250){beepFired.add(key);if(!(r===60&&S.horn))beep(false)}}}
+  if(q.xUntil&&q.xUntil<=now&&q.xUntil>lastTick){addLog("X nolaists automātiski");q.xUntil=0;save()}
+  lastTick=now}
+
+/* ---------- competitor comparison ---------- */
+/* remaining time & sailing distance to the finish from point p, starting at leg li (same ORC model as my own) */
+function remFrom(p,li,board){const W0=twd();if(!W0||!S.order.length||li>=S.order.length)return null;const w=W0.v;
+  const m=item(li);if(!m)return null;const aim=aimPoint(m,p,w),r=legSolve(xy(aim.pt,p),w,board);let T=r.tot||0,D=r.sail||0,from=aim.pt;
+  for(let i=li+1;i<S.order.length;i++){const n=item(i);if(!n)continue;const to=centerPt(n),q=legSolve(xy(to,from),w,null);T+=q.tot||0;D+=q.sail||0;from=to}
+  return{T,D,aim}}
+/* each competitor's own leg: same zone logic as my own rounding */
+function compLegTick(a){if(a.leg==null)a.leg=S.leg;const m=item(a.leg);if(!m||a.lat==null||a.leg>=S.order.length-1)return;
+  const p={lat:a.lat,lon:a.lon};let d=1e9,q0=null;itemPts(m).forEach(q=>{const dd=len(xy(q,p));if(dd<d){d=dd;q0=q}});const bq=brg(xy(q0,p));
+  if(d<S.zone||a.inZone){if(!a.inZone){a.inZone=true;a.minD=d;a.zBrg=bq}a.minD=Math.min(a.minD,d);if(d>a.minD+15||d>S.zone+10||Math.abs(diff(bq,a.zBrg))>100){a.leg++;a.inZone=false}}}
+function compMetrics(mmsi){const a=live.ais[mmsi],me=pos(),v=velocity(),W0=twd();if(!a||a.lat==null)return{none:true};
+  const age=Date.now()-(a.t||0),p={lat:a.lat,lon:a.lon},out={a,age,stale:age>60000};
+  if(me){const dv=xy(p,me);out.dist=len(dv);out.brg=brg(dv)}
+  out.sog=a.sog!=null?a.sog/KN:null;out.cog=a.cog;out.mySog=v?len(v)/KN:null;
+  if(W0&&a.cog!=null)out.board=diff(W0.v,a.cog)>=0?"S":"P";
+  compLegTick(a);
+  const mine=me&&!S.finished?remFrom(me,S.leg,markCalc&&markCalc.cur):null,theirs=remFrom(p,a.leg!=null?a.leg:S.leg,out.board);
+  if(mine&&theirs){out.gapT=theirs.T-mine.T;out.gapD=theirs.D-mine.D;out.legDiff=(a.leg!=null?a.leg:S.leg)-S.leg;
+    const now=Date.now(),g=a.gaps;if(!g.length||now-g[g.length-1].t>=5000){g.push({t:now,v:out.gapT});if(g.length>72)g.shift()}
+    const old=g.find(x=>now-x.t<=180000);if(old&&now-old.t>=30000)out.trend=(out.gapT-old.v)/((now-old.t)/60000)}
+  return out}
+
+/* ---------- performance vs ORC polar (through water — current excluded) ----------
+   Instruments: BSP + true wind vs water (from Signal K). Fallback without instruments: ground velocity minus the set current,
+   TWA from TWD, TWS from settings — approximate. Sniegums = BSP / ORC speed at this TWS and TWA. */
+live.inst=null;live.perf=null;
+const PSRC={inst:"B&G",sim:"SIM",gps:"GPS − straume ≈"};
+function perfSample(){const I=live.inst&&Date.now()-live.inst.t<5000&&live.inst.bsp!=null&&live.inst.tws!=null&&live.inst.twa!=null?live.inst:null;let bsp,tws,twa,src;
+  if(I){bsp=I.bsp;tws=I.tws*(S.twsK||1);twa=I.twa;src=I.src}
+  else{const v=velocity(),w=twd();if(!v||!w)return null;const c=curVec(),Vw={x:v.x-c.x,y:v.y-c.y};bsp=len(Vw)/KN;twa=diff(w.v,brg(Vw));tws=S.tws;src="gps"}
+  if(!(bsp>.5)||!(tws>0))return null;
+  const a=Math.abs(twa),pol=speedAt(a,tws),bt=target(tws),rt=runTarget(tws),up=a<90,tg=up?bt:rt,reach=a>bt.ang+12&&a<rt.ang-12;
+  return{bsp,tws,twa,pol,pct:bsp/pol*100,vmgPct:bsp*Math.abs(Math.cos(a*D2R))/tg.vmg*100,dev:a-tg.ang,up,reach,tAng:tg.ang,src}}
+function perfTick(){const s=perfSample(),now=Date.now(),P=live.perf;if(!s){if(P&&now-P.t>10000)live.perf=null;return}
+  const dt=P?(now-P.t)/1000:99,k=P&&dt<5&&P.up===s.up&&P.src===s.src?1-Math.exp(-dt/8):1,sm=(a,b)=>a+(b-a)*k;/* ~8 s smoothing */
+  live.perf={...s,pct:sm(P?P.pct:0,s.pct),vmgPct:sm(P?P.vmgPct:0,s.vmgPct),bspS:sm(P?P.bspS:0,s.bsp),dev:sm(P?P.dev:0,s.dev),t:now}}
+
+/* ---------- render: distance ---------- */
+let markCalc=null;
+const LEGNAME={beat:"augšvējš",run:"pa vējam",reach:"sānvējš"};
+function solve(){if(!has("course"))return{};const p=pos(),W0=twd(),m=item(S.leg);
+  if(!S.order.length)return{msg:"Izveido distanci: veidne vai zīmes zemāk."};
+  if(S.finished)return{msg:"Finišs — distance pabeigta.",fin:true};
+  if(!m)return{msg:"Distance pabeigta."};
+  if(!p)return{msg:"Gaida GPS pozīciju…"};
+  if(!W0)return{msg:"Ievadi vēja virzienu (TWD) iestatījumos."};
+  const w=W0.v,aim=aimPoint(m,p,w),Dv=xy(aim.pt,p),v=velocity();
+  const board=v&&len(v)>.5?(diff(w,brg(v))>=0?"S":"P"):((markCalc&&markCalc.cur)||"S");
+  const out=legSolve(Dv,w,board);out.aim=aim;out.m=m;out.legName=LEGNAME[out.type];const D=out.D;
+  out.vmc=v&&D>0?dot(v,{x:Dv.x/D,y:Dv.y/D})/KN:null;
+  const run=out.type==="run",man=run?"Pagrieziens pa vējam":"Halze";
+  if(out.direct)out.msg=out.type==="reach"?"Sānvējš — burā taisni uz zīmi, kurss caur ūdeni "+deg(out.hdg)+".":"Burā taisni uz zīmi.";
+  else if(out.tackNow)out.msg="Aiz pretējās layline — "+man.toLowerCase()+" tūlīt.";
+  else if(out.fetch)out.msg=out.over?"Layline pārbraukts — zīmi sasniegsi, nobraucot.":"Esi uz layline — zīmi sasniegsi šajā halzē.";
+  else if(out.lay!=null)out.msg="Turpini šajā halzē. "+man+" pie layline.";
+  else out.msg="Nevar aprēķināt posmu — pārbaudi TWD un polāras.";
+  let tot=out.tot||0,sail=out.sail||0,from=aim.pt;
+  for(let i=S.leg+1;i<S.order.length;i++){const n=item(i);if(!n)continue;const to=centerPt(n),r=legSolve(xy(to,from),w,null);tot+=r.tot||0;sail+=r.sail||0;from=to}
+  out.remT=tot;out.remS=sail;return out}
+function renderMark(){courseTick();const r=solve();markCalc=r;const set=(id,t,c)=>{const e=$(id);e.textContent=t;e.className="v"+(id==="mLay"||id==="mTot"?" big":"")+(c?" "+c:"")};
+  const m=item(S.leg);
+  $("legHead").textContent=!S.order.length?"Distance nav iestatīta":S.finished?"Finišs":"Posms "+(S.leg+1)+"/"+S.order.length+" · uz "+(r.aim?r.aim.label:m?m.name:"–")+(r.legName?" · "+r.legName:"");
+  const ch=S.order.map((id,i)=>'<button class="chip'+(i<S.leg||S.finished?" done":"")+(i===S.leg&&!S.finished?" cur":"")+'" data-i="'+i+'">'+esc(S.marks[id]?S.marks[id].name:id)+'</button>').join("");
+  if($("seqChips").dataset.h!==ch){$("seqChips").innerHTML=ch;$("seqChips").dataset.h=ch}
+  $("mMsg").textContent=r.msg||"–";$("mMsg").className="msg"+(r.tackNow||r.over?" alert":"");
+  set("mDist",r.D!=null?dist(r.D):"–");set("mBrg",r.brg!=null?deg(r.brg):"–");set("mVmc",r.vmc!=null?dec(r.vmc,1):"–");
+  $("mLayK").textContent=r.type==="run"?"Līdz layline (pa vējam)":"Līdz layline";
+  if(r.direct){set("mLay","taisni");$("mLayU").textContent=""}
+  else{set("mLay",r.lay!=null?(r.lay>0?mmss(r.lay*1000):"0:00"):"–",r.lay===0?"warn":"");$("mLayU").textContent=r.lay>0&&r.V1?dist(r.lay*len(r.V1))+" šajā halzē":""}
+  set("mTot",r.tot!=null?mmss(r.tot*1000):"–");$("mTotU").textContent=r.tot!=null&&r.t1>1&&r.t2>1?"ieskaitot manevru "+S.loss+" s":"";
+  set("mSail",r.sail!=null?dist(r.sail):"–");
+  set("mTwa",r.twaT!=null?dec(r.twaT,1)+"°":"–");set("mBsp",r.bspT!=null?dec(r.bspT,1):"–");
+  const PF=live.perf;set("mPerf",PF?Math.round(PF.pct)+"%":"–",PF?(PF.pct>=95?"good":PF.pct>=85?"warn":"bad"):"");
+  $("twsVal").textContent=dec(TWS(),0)+(liveWind()?" ·B&G":"");
+  if(r.cur&&!r.direct)set("mTack",r.cur==="S"?"Labā":"Kreisā",r.cur==="S"?"stbd":"port");else set("mTack","–");
+  const sh=shiftNow();if(sh!=null){set("mShift",(sh>0?"+":"")+dec(sh,0)+"°",Math.abs(sh)<2?"":sh>0?"good":"bad");$("mShiftU").textContent=Math.abs(sh)<2?"vidējais":sh>0?"pacēlums (lift)":"kritums (header) — apsver halzi"}
+  else{set("mShift","–");$("mShiftU").textContent=r.type&&r.type!=="beat"?"tikai augšvējā":""}
+  set("mRemT",r.remT!=null?mmss(r.remT*1000):"–");set("mRemS",r.remS!=null?dist(r.remS):"–");
+  const T=S.tacks,w=twd();$("tackInfo").textContent=(w?"TWD "+deg(w.v)+" ("+w.src+")":"TWD nav")+"  ·  TWS "+dec(TWS(),0)+" kn  ·  Straume uz "+deg(S.curSet)+" "+dec(S.curKn||0,1)+" kn  ·  Dreifs "+dec(S.leeway||0,0)+"°  ·  Zona "+S.zone+" m  ·  "+(S.polar.name||"")+(T.S&&T.P?"  ·  Halžu leņķis "+Math.round(Math.abs(diff(T.S.cog,T.P.cog)))+"°":"")}
+
+/* ---------- plot ---------- */
+function css(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()||"#888"}
+function drawPlot(){const cv=$("plot");if($("p-mark").hidden)return;const dpr=window.devicePixelRatio||1,W_=cv.clientWidth,H=cv.clientHeight;if(!W_)return;
+  cv.width=W_*dpr;cv.height=H*dpr;const g=cv.getContext("2d");g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W_,H);
+  const p=pos(),ms=Object.values(S.marks);const o=p||(ms[0]&&ms[0].p)||S.cb;if(!o){g.fillStyle=css("--muted");g.font="14px "+css("--f-body");g.fillText("Nav pozīcijas",12,24);return}
+  const pts=[];if(p)pts.push(xy(p,o));ms.forEach(m=>itemPts(m).forEach(q=>pts.push(xy(q,o))));if(S.cb)pts.push(xy(S.cb,o));if(S.pin)pts.push(xy(S.pin,o));
+  let mnx=Math.min(...pts.map(a=>a.x)),mxx=Math.max(...pts.map(a=>a.x)),mny=Math.min(...pts.map(a=>a.y)),mxy=Math.max(...pts.map(a=>a.y));
+  const span=Math.max(mxx-mnx,mxy-mny,200)*1.2,cx=(mnx+mxx)/2,cy=(mny+mxy)/2,sc=Math.min(W_,H)/span;
+  const P=a=>[W_/2+(a.x-cx)*sc,H/2-(a.y-cy)*sc],PL=q=>P(xy(q,o));
+  g.lineWidth=1;g.strokeStyle=css("--line");g.beginPath();for(let i=1;i<4;i++){g.moveTo(W_*i/4,0);g.lineTo(W_*i/4,H);g.moveTo(0,H*i/4);g.lineTo(W_,H*i/4)}g.stroke();
+  /* course path */
+  if(S.order.length>1){g.strokeStyle=css("--muted");g.setLineDash([2,4]);g.lineWidth=1;g.beginPath();S.order.forEach((id,i)=>{const m=S.marks[id];if(!m)return;const [a,b]=PL(centerPt(m));i?g.lineTo(a,b):g.moveTo(a,b)});g.stroke();g.setLineDash([])}
+  const r=markCalc;
+  if(r&&r.aim&&r.VS&&!r.direct){const M=xy(r.aim.pt,o);[[r.VS,css("--stbd")],[r.VP,css("--port")]].forEach(([V,c])=>{const u={x:-V.x/len(V),y:-V.y/len(V)};const E={x:M.x+u.x*span*2,y:M.y+u.y*span*2};
+    g.strokeStyle=c;g.setLineDash([6,5]);g.lineWidth=2;g.beginPath();g.moveTo(...P(M));g.lineTo(...P(E));g.stroke()});g.setLineDash([])}
+  if(S.cb&&S.pin){g.strokeStyle=css("--accent");g.lineWidth=2;g.beginPath();g.moveTo(...PL(S.cb));g.lineTo(...PL(S.pin));g.stroke();
+    g.fillStyle=css("--accent");[[S.cb,"RC"],[S.pin,"PIN"]].forEach(([q,t])=>{const [a,b]=PL(q);g.beginPath();g.arc(a,b,4,0,7);g.fill();g.font="11px "+css("--f-body");g.fillText(t,a+6,b+12)})}
+  if(live.track.length>1){g.strokeStyle=css("--muted");g.lineWidth=1.5;g.beginPath();live.track.forEach((q,i)=>{const [a,b]=PL(q);i?g.lineTo(a,b):g.moveTo(a,b)});g.stroke()}
+  const curId=S.finished?null:S.order[S.leg];
+  ms.forEach(m=>{const isCur=m.id===curId;g.font="600 12px "+css("--f-body");
+    if(m.type==="finish"){g.strokeStyle=css("--fg");g.lineWidth=isCur?3:2;g.setLineDash([4,3]);g.beginPath();g.moveTo(...PL(m.p));g.lineTo(...PL(m.p2));g.stroke();g.setLineDash([]);const [a,b]=PL(centerPt(m));g.fillStyle=css("--fg");g.fillText(m.name,a+6,b-6);return}
+    itemPts(m).forEach((q,k)=>{const [a,b]=PL(q);g.fillStyle=css("--warn");g.beginPath();g.arc(a,b,isCur?7:5,0,7);g.fill();
+      if(isCur&&r&&r.aim&&r.aim.pt===q){g.strokeStyle=css("--accent");g.lineWidth=2;g.beginPath();g.arc(a,b,12,0,7);g.stroke()}
+      g.fillStyle=css("--fg");g.fillText(m.type==="gate"?m.name+(dot(xy(q,centerPt(m)),vec((twd()||{v:0}).v+90,1))>0?"p":"s"):m.name,a+9,b+4)})});
+  if(p){const [a,b]=PL(p);const v=velocity();const h=v&&len(v)>.3?brg(v):0;g.save();g.translate(a,b);g.rotate(h*D2R);g.fillStyle=css("--fg");g.beginPath();g.moveTo(0,-11);g.lineTo(6,8);g.lineTo(-6,8);g.closePath();g.fill();g.restore()}
+  const w=twd();if(w){const ax=W_-34,ay=34;g.strokeStyle=css("--fg");g.fillStyle=css("--fg");g.lineWidth=2;const u=vec(w.v,1);
+    g.beginPath();g.moveTo(ax+u.x*18,ay-u.y*18);g.lineTo(ax-u.x*14,ay+u.y*14);g.stroke();
+    g.save();g.translate(ax-u.x*14,ay+u.y*14);g.rotate((w.v+180)*D2R);g.beginPath();g.moveTo(0,-7);g.lineTo(5,2);g.lineTo(-5,2);g.closePath();g.fill();g.restore();
+    g.font="11px "+css("--f-num");g.fillText("vējš",ax-14,ay+34)}
+  g.fillStyle=css("--muted");g.font="11px "+css("--f-num");g.fillText("N↑  "+dist(span/4).replace(" ","\u00a0")+" / rūtiņa",8,H-8)}
+
+/* ---------- instrument screens (ProStart-style) ---------- */
+let CLK={clock:"5:00",urgent:false,remain:null,idle:true,after:null};
+function lineNow(){/* signed distance to line from the bow (+ = course side), velocity toward course side, from pin-left / RC-right convention */
+  const p=pos();if(!p||!S.cb||!S.pin)return null;const o=S.pin,C=xy(S.cb,o),L=len(C);if(L<1)return null;const n={x:-C.y/L,y:C.x/L};
+  const v=velocity();let bowV=null;if(v&&len(v)>.3)bowV=vec(brg(v),S.bow||0);
+  let B=xy(p,o);if(bowV)B=add(B,bowV);const d=dot(B,n),vn=v?dot(v,n):0;return{d,vn}}
+function shiftNow(){if(!(has("orc")&&has("course")&&markCalc&&markCalc.type)){const t=tackShift();return t?(t.lift!=null?t.lift:t.dev):null}const v=velocity(),w=twd();if(!v||len(v)<.5||!w)return null;const L=liveWind();
+  if(L&&L.uF&&L.uL&&S.twdSrc!=="manual"){const I=live.inst;if(!I||I.twa==null||Math.abs(I.twa)>=90)return null;if(Date.now()-L.since<120000)return null;
+    const d=diff(brg(L.uF),brg(L.uL));return I.twa>=0?d:-d/* stbd: veer = lift; port: back = lift */}
+  if(Math.abs(diff(brg(v),w.v))>=90)return null;const st=diff(w.v,brg(v))>=0;let ref;
+  if(S.laySrc==="orc"){const tg=target(TWS());ref=tg.ang+(S.leeway||0)}else{const T=S.tacks,t=st?T.S:T.P;if(!t)return null;ref=Math.abs(diff(t.cog,w.v))}
+  return ref-Math.abs(diff(brg(v),w.v))/* + lift, − header */}
+const METRICS={
+  timer:{l:"Taimeris",f:()=>({t:CLK.clock,c:CLK.urgent?"red":""})},
+  line:{l:"Līdz līnijai, m",f:()=>{const L=lineNow();if(!L)return{t:S.cb&&S.pin?"–":"---"};const r=CLK.remain;return{t:(L.d>0?"+":"")+String(Math.abs(L.d)<100?L.d.toFixed(1):Math.round(L.d)).replace(".",","),c:L.d>0&&r!=null?"red":""}}},
+  burn:{l:"Rezerve",f:()=>{const L=lineNow(),r=CLK.remain;if(!L||r==null||L.d>=0||L.vn<=.2)return{t:"–"};const b=r-(-L.d/L.vn*1000);return{t:mmss(b,true),c:b<0?"red":b<10000?"amb":"grn"}}},
+  sog:{l:"SOG, kn",f:()=>{const v=velocity();return{t:v?dec(len(v)/KN,1):"–"}}},
+  cog:{l:"COG",f:()=>{const v=velocity();return{t:v&&len(v)>.3?deg(brg(v)):"–"}}},
+  vmc:{l:"VMC uz zīmi, kn",f:()=>({t:markCalc&&markCalc.vmc!=null?dec(markCalc.vmc,1):"–"})},
+  lay:{l:"Līdz layline",lf:()=>"Līdz layline"+(markCalc&&markCalc.aim?" · uz "+markCalc.aim.label:""),f:()=>{const r=markCalc;if(r&&r.direct)return{t:"TAISNI"};return{t:r&&r.lay!=null?(r.lay>0?mmss(r.lay*1000):(r.type==="run"?"GYBE":"HALZE")):"–",c:r&&(r.tackNow||r.lay===0)?"amb":""}}},
+  tot:{l:"Laiks līdz zīmei",lf:()=>"Līdz zīmei"+(markCalc&&markCalc.aim?" "+markCalc.aim.label:"")+(markCalc&&markCalc.legName?" · "+markCalc.legName:""),f:()=>({t:markCalc&&markCalc.tot!=null?mmss(markCalc.tot*1000):"–"})},
+  remt:{l:"Laiks līdz finišam",f:()=>({t:markCalc&&markCalc.remT!=null?mmss(markCalc.remT*1000):"–"})},
+  rems:{l:"Ceļš līdz finišam",f:()=>({t:markCalc&&markCalc.remS!=null?dist(markCalc.remS):"–"})},
+  sail:{l:"Ceļš līdz zīmei",f:()=>({t:markCalc&&markCalc.sail!=null?dist(markCalc.sail):"–"})},
+  dist:{l:"Taisni līdz zīmei",f:()=>({t:markCalc&&markCalc.D!=null?dist(markCalc.D):"–"})},
+  brg:{l:"Peilējums uz zīmi",f:()=>({t:markCalc&&markCalc.brg!=null?deg(markCalc.brg):"–"})},
+  perf:{l:"Sniegums pret ORC",lf:()=>"Sniegums pret ORC"+(live.perf?" · "+PSRC[live.perf.src]:""),f:()=>{const P=live.perf;return{t:P?Math.round(P.pct)+"%":"–",c:P?(P.pct>=95?"grn":P.pct>=85?"amb":"red"):""}}},
+  bsp:{l:"BSP, kn",lf:()=>{const P=live.perf;return P?"BSP · ORC "+dec(P.pol,2)+" kn pie "+Math.round(Math.abs(P.twa))+"° / "+dec(P.tws,1)+" kn":"BSP, kn"},f:()=>{const P=live.perf;return{t:P?dec(P.bspS,1):"–"}}},
+  pol:{l:"ORC ātrums, kn",f:()=>{const P=live.perf;return{t:P?dec(P.pol,2):"–"}}},
+  vmgp:{l:"VMG sniegums",f:()=>{const P=live.perf;if(!P||P.reach)return{t:"–"};return{t:Math.round(P.vmgPct)+"%",c:P.vmgPct>=95?"grn":P.vmgPct>=85?"amb":"red"}}},
+  twa:{l:"Vēja leņķis TWA",f:()=>{const v=velocity(),w=twd();if(!v||len(v)<.3||!w)return{t:"–"};const t=diff(w.v,brg(v));return{t:Math.round(Math.abs(t))+"°"+(t>=0?"L":"K"),c:t>=0?"grn":"red"}}},
+  elapsed:{l:"Laiks distancē",f:()=>({t:hms(elapsed())})},
+  tbsp:{l:"Mērķa BSP, kn",f:()=>({t:dec(target(TWS()).bsp,1)})},
+  shift:{l:"Vēja maiņa",lf:()=>{const t=tackShift();return t&&t.lift==null&&!(has("orc")&&has("course")&&markCalc&&markCalc.type)?"Novirze no halzes kursa":"Vēja maiņa"},f:()=>{const s=shiftNow();return{t:s==null?"–":(s>0?"+":"")+Math.round(s)+"°",c:s==null||Math.abs(s)<2?"":s>0?"grn":"red"}}}};
+function favNow(){if(!S.cb||!S.pin)return null;const C=xy(S.cb,S.pin),L=len(C);if(L<30)return{len:L,short:true};const n={x:-C.y/L,y:C.x/L},w=twd();
+  if(!w)return{len:L};const up=vec(w.v,1);if(dot(n,up)<0.2)return{len:L,bad:true};return{len:L,adv:dot(C,up),bias:Math.abs(diff(brg(n),w.v))}}
+const BARS={
+  fav:{f:()=>{const F=favNow();if(!F)return{v:null,l:"Favorizētais gals — uzņem PIN un RC",lt:"PIN",rt:"RC"};
+      if(F.short)return{v:null,l:"Līnija "+dist(F.len)+" — uzņem PIN un RC pie īstajiem galiem",lt:"PIN",rt:"RC"};
+      if(F.bad)return{v:null,l:"Pārbaudi galus vai TWD · līnija "+dist(F.len),lt:"PIN",rt:"RC"};
+      if(F.adv==null)return{v:null,l:"Favorizētais gals — nav vēja virziena · līnija "+dist(F.len),lt:"PIN",rt:"RC"};
+      return{v:F.adv/10,l:(F.adv>=0?"RC":"Pin")+" +"+Math.round(Math.abs(F.adv))+" m · nobīde "+Math.round(F.bias)+"° · "+dist(F.len),lt:"PIN",rt:"RC",neutral:true}}},
+  pace:{f:()=>{const L=lineNow(),r=CLK.remain;if(!L||r==null)return{v:null,l:"Starta temps",lt:"VĒLU",rt:"AGRI"};
+      const pred=L.d+L.vn*r/1000;return{v:pred/2,l:"Startā: "+(pred>0?"+":"")+dec(pred,0)+" m",lt:"VĒLU",rt:"AGRI",neutral:true}}},
+  line:{f:()=>{const L=lineNow();if(!L)return{v:null,l:"Līdz līnijai",lt:"",rt:""};return{v:L.d/10,l:"Līdz līnijai · 10 m/seg.",lt:"STARTA PUSE",rt:"KURSA PUSE",neutral:true}}},
+  shift:{f:()=>{const s=shiftNow();return{v:s==null?null:s/2,l:"Vēja maiņa"+(s==null?"":" "+(s>0?"+":s<0?"−":"")+Math.abs(Math.round(s))+"°"),lt:"KRITUMS",rt:"PACĒLUMS",signed:true,ticks:[-20,-15,-10,-5,0,5,10,15,20],step:2}}},
+  perf:{f:()=>{const P=live.perf;return{v:P?(P.pct-100)/2:null,l:"Sniegums · 2%/seg.",lt:"LĒNĀK",rt:"ĀTRĀK",signed:true}}},
+  twa:{f:()=>{const P=live.perf;if(!P)return{v:null,l:"TWA pret mērķi",lt:"",rt:""};if(P.reach)return{v:null,l:"Sānvējš — mērķa TWA nav, stūrē uz zīmi",lt:"",rt:""};
+      return{v:P.dev,l:"TWA "+Math.round(Math.abs(P.twa))+"° · mērķis "+Math.round(P.tAng)+"° · 1°/seg.",lt:"AUGSTĀK",rt:P.up?"ZEMĀK":"DZIĻĀK",neutral:true}}}};
+function raceOn(){return CLK.after!=null&&CLK.after>=5000}/* 5 s pēc starta: kurss, ātrums, vēja maiņa */
+const SCREENS=[
+  {name:"Starts",a:()=>raceOn()?"cog":"timer",b:()=>raceOn()?"sog":"line",bar:()=>raceOn()?"shift":CLK.remain!=null&&CLK.remain<=120000?"pace":"fav",btns:true},
+  {name:"Stūre",steer:true},
+  {name:"Ātrums",a:()=>has("orc")?"perf":"sog",b:()=>has("orc")?"bsp":"elapsed",bar:()=>has("orc")?"twa":"shift"},
+  {name:"Zīme",pro:"course",a:()=>markCalc&&markCalc.direct?"tot":"lay",b:()=>markCalc&&markCalc.direct?"rems":"sail",bar:()=>"perf"},
+  {name:"Pielāgots",a:()=>S.c1,b:()=>S.c2,bar:()=>S.cbar}];
+(function(){const g=$("segs");for(let i=0;i<21;i++){const e=document.createElement("i");if(i===10)e.className="c";g.appendChild(e)}})();
+function setScreen(i){const n=SCREENS.length;i=(i+n)%n;if(i===3&&(!S.order.length||!has("course")))i=S.scr<3?4:2;S.scr=i;save();document.querySelectorAll("#inav button").forEach(b=>b.setAttribute("aria-current",String(+b.dataset.s===S.scr)));renderInst()}
+document.querySelectorAll("#inav button").forEach(b=>b.addEventListener("click",()=>setScreen(+b.dataset.s)));
+(function(){let x0=null,y0=null;const el=$("inst");el.addEventListener("touchstart",e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY},{passive:true});
+  el.addEventListener("touchend",e=>{if(x0==null)return;const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5)setScreen(S.scr+(dx<0?1:-1));x0=null},{passive:true})})();
+$("iPin").onclick=()=>$("bPin").click();
+$("iRC").onclick=()=>$("bCB").click();
+$("iGun").onclick=()=>{const q=S.seq;if(!q.running&&!q.ap&&!q.fs)$("bSig1").click();else if(q.running)$("bSync").click()};
+let autoDone=0;
+function renderInst(){if($("p-inst").hidden)return;document.querySelector('#inav button[data-s="3"]').hidden=!S.order.length||!has("course");if(S.scr===3&&(!S.order.length||!has("course")))S.scr=2;const sc=SCREENS[S.scr]||SCREENS[0];$("inst").classList.toggle("day",!!S.day);
+  const st=!!sc.steer;$("steer").hidden=!st;document.querySelectorAll("#inst .cell, #inst .ibar").forEach(e=>e.hidden=st);
+  $("irec").hidden=!(REC.on&&(S.scr!==0||raceOn()));if(REC.on)$("recTxt").textContent="● Ieraksts "+hms(Date.now()-REC.start);
+  if(sc.pro&&!has(sc.pro)){$("ibtns").hidden=true;$("startExtras").hidden=true;$("iL1").textContent="Pro klucītis";$("iV1").textContent="PRO";$("iV1").className="iv amb";$("iV1").style.fontSize="";$("iL2").textContent="Ieslēdz Pro iestatījumos";$("iV2").textContent="–";$("iV2").className="iv";$("iBL").textContent="";$("ends").innerHTML="";$("ticks").innerHTML="";$("ticks").dataset.h="";return}
+  if(st){$("ibtns").hidden=true;$("startExtras").hidden=true;drawSteer();return}
+  const val=k=>typeof k==="function"?k():k;
+  [[val(sc.a),"iL1","iV1"],[val(sc.b),"iL2","iV2"]].forEach(([k,l,v])=>{const M=METRICS[k]||METRICS.sog,r=M.f();$(l).textContent=M.lf?M.lf():M.l;const e=$(v);e.textContent=r.t;e.className="iv"+(r.c?" "+r.c:"");const L=String(r.t).length;e.style.fontSize=L>5?"min("+(27*5/L).toFixed(1)+"vw,15dvh,170px)":""});
+  const B=(BARS[val(sc.bar)]||BARS.shift).f();$("iBL").textContent=B.l;$("ends").innerHTML="<span>"+(B.lt||"")+"</span><span>"+(B.rt||"")+"</span>";{const th=B.ticks?B.ticks.map(t=>'<span style="left:'+((10+t/B.step+.5)/21*100).toFixed(2)+'%">'+(t>0?"+":t<0?"−":"")+Math.abs(t)+"</span>").join(""):"";const T=$("ticks");if(T.dataset.h!==th){T.innerHTML=th;T.dataset.h=th}}
+  const segs=$("segs").children;const n=B.v==null?0:Math.max(-10,Math.min(10,Math.round(B.v)));
+  for(let i=0;i<21;i++){const k=i-10;let cls=i===10?"c":"";if(n<0&&k<0&&k>=n)cls+=B.neutral?" on n":" on l";if(n>0&&k>0&&k<=n)cls+=B.neutral?" on n":" on r";segs[i].className=cls}
+  $("ibtns").hidden=!sc.btns||(S.scr===0&&raceOn());$("startExtras").hidden=S.scr!==0;$("iPin").classList.toggle("set",!!S.pin);$("iRC").classList.toggle("set",!!S.cb);
+  $("iGun").textContent=S.seq.running?"SINHR.":"SĀKT"}
+
+/* ---------- SailSteer-style compass ---------- */
+const twdHist=[];
+function drawSteer(){const cv=$("steerCv"),dpr=window.devicePixelRatio||1,Wc=cv.clientWidth,Hc=cv.clientHeight;if(!Wc||!Hc)return;
+  cv.width=Wc*dpr;cv.height=Hc*dpr;const g=cv.getContext("2d");g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,Wc,Hc);
+  const cs=getComputedStyle($("inst")),C=n=>cs.getPropertyValue(n).trim();const FG=C("--i-fg"),MUT=C("--i-mut"),SEG=C("--i-seg"),RED=C("--i-red"),GRN=C("--i-grn"),AMB=C("--i-amb");
+  const day=!!S.day,CARD=day?"#1b2329":"#f2f5f7",CARDT=day?"#fff":"#0a0f12",BLUE="#3d7bff";
+  const v=velocity(),w=twd(),r=markCalc;const H=v&&len(v)>.3?brg(v):(r&&r.brg!=null?r.brg:0);
+  const cx=Wc/2,cy=Hc/2+6,Ro=Math.min(Wc,Hc)/2-6,Rr=Ro-14,Rc=Rr-6,Ri=Rc-24;
+  const A=b=>(diff(b,H)-90)*D2R;/* screen angle for a bearing, heading-up */
+  const P=(b,rr)=>[cx+Math.cos(A(b))*rr,cy+Math.sin(A(b))*rr];
+  /* outer ring with port (red) / starboard (green) close-hauled zones */
+  g.lineWidth=12;g.strokeStyle=SEG;g.beginPath();g.arc(cx,cy,Ro-6,0,7);g.stroke();
+  const zone=(a0,a1,col)=>{g.strokeStyle=col;g.beginPath();g.arc(cx,cy,Ro-6,(a0-90)*D2R,(a1-90)*D2R);g.stroke()};
+  g.globalAlpha=.85;zone(-60,0,RED);zone(0,60,GRN);g.globalAlpha=1;
+  /* compass card */
+  g.lineWidth=22;g.strokeStyle=CARD;g.beginPath();g.arc(cx,cy,Rc-11,0,7);g.stroke();
+  g.fillStyle=CARDT;g.font="700 13px "+getComputedStyle(document.documentElement).getPropertyValue("--f-num");g.textAlign="center";g.textBaseline="middle";
+  for(let b=0;b<360;b+=10){const [x,y]=P(b,Rc-11);if(b%30===0){g.save();g.translate(x,y);g.rotate(A(b)+Math.PI/2);g.fillText(b===0?"N":String(b).padStart(3,"0"),0,0);g.restore()}else{g.beginPath();g.arc(x,y,1.6,0,7);g.fill()}}
+  /* laylines / course wedges */
+  const wedge=(b,col,sp)=>{g.fillStyle=col;g.globalAlpha=.38;g.beginPath();g.moveTo(cx,cy);g.arc(cx,cy,Ri,A(b-sp),A(b+sp));g.closePath();g.fill();g.globalAlpha=1;
+    g.strokeStyle=col;g.lineWidth=2;g.setLineDash([7,5]);g.beginPath();g.moveTo(cx,cy);g.lineTo(...P(b,Ri));g.stroke();g.setLineDash([])};
+  let sp=4;if(twdHist.length>5){const m=twdHist.reduce((a,x)=>a+x,0)/twdHist.length;sp=Math.max(3,Math.min(15,Math.sqrt(twdHist.reduce((a,x)=>a+(x-m)*(x-m),0)/twdHist.length)*1.5))}
+  if(r&&r.VS&&!r.direct){wedge(brg(r.VP),RED,sp);wedge(brg(r.VS),GRN,sp)}
+  else if(r&&r.direct&&r.hdg!=null){wedge(r.hdg,AMB,3)}
+  /* boat outline */
+  g.strokeStyle=MUT;g.lineWidth=3;g.beginPath();g.moveTo(cx,cy-Ri*.95);g.quadraticCurveTo(cx+Ri*.42,cy-Ri*.2,cx+Ri*.3,cy+Ri*.75);g.moveTo(cx,cy-Ri*.95);g.quadraticCurveTo(cx-Ri*.42,cy-Ri*.2,cx-Ri*.3,cy+Ri*.75);g.stroke();
+  /* mark bearing */
+  if(r&&r.aim&&r.brg!=null){const [x,y]=P(r.brg,Ri-14);g.fillStyle=AMB;g.beginPath();g.arc(x,y,11,0,7);g.fill();g.fillStyle=CARDT;g.font="700 11px sans-serif";g.fillText(String(r.aim.label).slice(0,3),x,y+.5);
+    g.strokeStyle=AMB;g.lineWidth=1.5;g.setLineDash([2,4]);g.beginPath();g.moveTo(cx,cy);g.lineTo(...P(r.brg,Ri-25));g.stroke();g.setLineDash([])}
+  /* true wind marker */
+  if(w){const [x,y]=P(w.v,Ro-6);g.save();g.translate(x,y);g.rotate(A(w.v)+Math.PI/2);g.fillStyle=BLUE;g.beginPath();g.moveTo(0,16);g.lineTo(-13,-10);g.lineTo(13,-10);g.closePath();g.fill();
+    g.fillStyle="#fff";g.font="700 13px sans-serif";g.fillText("T",0,-1);g.restore()}
+  /* heading box */
+  g.fillStyle=CARD;const bw=74,bh=34;g.fillRect(cx-bw/2,cy-Rc-bh/2+2,bw,bh);g.strokeStyle=AMB;g.lineWidth=2;g.strokeRect(cx-bw/2,cy-Rc-bh/2+2,bw,bh);
+  g.fillStyle=CARDT;g.font="700 26px "+getComputedStyle(document.documentElement).getPropertyValue("--f-num");g.fillText(v&&len(v)>.3?String(Math.round(H)%360).padStart(3,"0"):"---",cx,cy-Rc+3);
+  /* current: arrow + speed in the centre */
+  const ck=S.curKn||0;if(ck>0.05){g.save();g.translate(cx,cy+Ri*.45);g.rotate(A(S.curSet)+Math.PI/2);g.fillStyle=BLUE;g.globalAlpha=.9;g.beginPath();g.moveTo(0,-16);g.lineTo(9,8);g.lineTo(-9,8);g.closePath();g.fill();g.restore()}
+  g.fillStyle=FG;g.font="700 22px "+getComputedStyle(document.documentElement).getPropertyValue("--f-num");g.fillText(dec(ck,1),cx,cy+Ri*.45+26);
+  g.fillStyle=MUT;g.font="11px sans-serif";g.fillText("straume, kn",cx,cy+Ri*.45+42);
+  /* labels: mark + layline / course */
+  g.textAlign="left";g.fillStyle=MUT;g.font="12px sans-serif";
+  if(!(r&&r.aim)){const el=elapsed();if(el!=null)g.fillText("Distancē "+hms(el)+(TK.count?" · halzes "+TK.count:""),6,12)}
+  if(r&&r.aim)g.fillText("Uz "+r.aim.label+" · "+dist(r.D)+(r.lay!=null&&!r.direct?" · layline "+(r.lay>0?mmss(r.lay*1000):"tagad"):r.direct?" · taisni":""),6,12);
+  g.textAlign="right";if(w)g.fillText("TWD "+deg(w.v)+" · "+dec(TWS(),0)+" kn",Wc-6,12);
+  /* bottom numbers */
+  if(w&&v&&len(v)>.3){const t=diff(w.v,H),a=Math.abs(t);$("sTwa").textContent=Math.round(a)+"°"+(t>=0?"L":"K");$("sTwa").style.color=t>=0?GRN:RED;
+    const tt=!has("orc")?0:r&&r.twaT!=null?r.twaT:(a<90?target(TWS()).ang:runTarget(TWS()).ang);$("sTwaT").textContent=has("orc")?"mērķis "+Math.round(tt)+"°":(t>=0?"labā halze":"kreisā halze")}
+  else{$("sTwa").textContent="–";$("sTwa").style.color="";$("sTwaT").textContent=w?"–":"TWD nav"}
+  const PI_=live.perf&&live.perf.src!=="gps"?live.perf:null;$("sSpdL").textContent=PI_?"BSP, kn":"SOG, kn";
+  const sp_=PI_?PI_.bspS:v?len(v)/KN:null;$("sSpd").textContent=sp_!=null?dec(sp_,1):"–";
+  if(has("orc")){$("sTgtL").textContent="Mērķis";const tgt=r&&r.bspT!=null?r.bspT:target(TWS()).bsp;$("sTgt").textContent=dec(tgt,1);$("sTgt").style.color="";
+    const pf=live.perf?Math.round(live.perf.pct):null;$("sPerf").textContent=pf!=null?pf+"%":"–";$("sPerf").style.color=pf==null?"":pf>=95?GRN:pf>=85?AMB:RED}
+  else{const t=tackShift();$("sTgtL").textContent="Pret halzi";
+    if(!t){$("sTgt").textContent="–";$("sTgt").style.color="";$("sPerf").textContent=TK.pending?"nosaka…":"stabilizē kursu";$("sPerf").style.color=""}
+    else if(t.lift!=null){$("sTgt").textContent=(t.lift>0?"+":"")+Math.round(t.lift)+"°";$("sTgt").style.color=Math.abs(t.lift)<2?"":t.lift>0?GRN:RED;$("sPerf").textContent=Math.abs(t.lift)<2?"vidējais":t.lift>0?"pacēlums":"kritums";$("sPerf").style.color=$("sTgt").style.color}
+    else{$("sTgt").textContent=(t.dev>0?"+":"")+Math.round(t.dev)+"°";$("sTgt").style.color="";$("sPerf").textContent="novirze";$("sPerf").style.color=""}}}
+setInterval(()=>{const w=twd();if(w){twdHist.push(w.v);if(twdHist.length>120)twdHist.shift()}},5000);
+
+/* ---------- render: competitors ---------- */
+function renderAis(){if($("p-ais").hidden)return;
+  const n=Object.keys(live.ais).length;
+  $("aisSrc").textContent=(live.src==="sim"?"Simulācija: 4 izdomātas jahtas.":S.skOn?"Signal K: "+skState+".":"AIS datu avots nav ieslēgts — Iestatījumi → Signal K.")+" Redzami AIS mērķi: "+n+".";
+  /* cards */
+  const cards=S.comp.map(c=>{const M=compMetrics(c.mmsi),nm=esc(c.name||(M.a&&M.a.name)||c.mmsi);
+    if(M.none)return'<div class="card ccard"><div class="chead"><b>'+nm+'</b><span class="note">MMSI '+esc(c.mmsi)+'</span></div><p class="note">Nav AIS datu no šīs jahtas.</p></div>';
+    const g=M.gapT,gc=g==null?"":g>=0?"good":"bad",tr=M.trend;
+    const sd=M.sog!=null&&M.mySog!=null?M.mySog-M.sog:null;
+    return'<div class="card ccard"><div class="chead"><b>'+nm+'</b><span class="note">'+(M.stale?"dati "+Math.round(M.age/60000)+" min veci · ":"")+(M.dist!=null?dist(M.dist)+" · "+deg(M.brg):"")+'</span></div>'+
+      '<div class="grid"><div class="ro"><span class="k">Starpība (laiks)</span><span class="cgap '+gc+'">'+(g!=null?mmss(g*1000,true):"–")+'</span><span class="u">'+(M.gapD!=null?(M.gapD>=0?"+":"−")+dist(Math.abs(M.gapD)).replace("−","")+" ceļā":"")+(M.legDiff?" · "+(M.legDiff>0?"apsteidz par ":"atpaliek par ")+Math.abs(M.legDiff)+" zīm.":"")+'</span></div>'+
+      '<div class="ro"><span class="k">Tendence</span><span class="ctr '+(tr==null?"":tr>=0?"good":"bad")+'">'+(tr!=null?(tr>=0?"▲ +":"▼ −")+dec(Math.abs(tr),1)+" s/min":"–")+'</span><span class="u">pēdējās 3 min</span></div></div>'+
+      '<div class="grid three"><div class="ro"><span class="k">SOG viņš / es</span><span class="v">'+(M.sog!=null?dec(M.sog,1):"–")+' / '+(M.mySog!=null?dec(M.mySog,1):"–")+'</span><span class="u '+(sd==null?"":sd>=0?"good":"bad")+'">'+(sd!=null?(sd>=0?"+":"−")+dec(Math.abs(sd),1)+" kn":"")+'</span></div>'+
+      '<div class="ro"><span class="k">COG viņš</span><span class="v">'+deg(M.cog)+'</span><span class="u">'+(M.board?(M.board==="S"?"labā halze":"kreisā halze"):"")+'</span></div>'+
+      '<div class="ro"><span class="k">COG es</span><span class="v">'+(velocity()?deg(brg(velocity())):"–")+'</span></div></div></div>'}).join("");
+  $("compCards").innerHTML=cards||'<div class="card"><p class="note">Konkurenti nav izvēlēti. Izvēlies līdz 3 jahtām no saraksta zemāk.</p></div>';
+  /* list of visible targets */
+  const me=pos();const list=Object.values(live.ais).filter(a=>a.lat!=null).map(a=>({a,d:me?len(xy({lat:a.lat,lon:a.lon},me)):1e9})).sort((x,y)=>x.d-y.d).slice(0,20);
+  const sel=new Set(S.comp.map(c=>c.mmsi));
+  const lh=list.map(({a,d})=>'<div class="arow"><span><b>'+esc(a.name||"—")+'</b> · '+esc(a.mmsi)+(d<1e9?" · "+dist(d):"")+'</span>'+(sel.has(a.mmsi)?'<button class="small danger" data-rm="'+esc(a.mmsi)+'">Noņemt</button>':'<button class="small" data-add="'+esc(a.mmsi)+'"'+(S.comp.length>=3?" disabled":"")+'>Pievienot</button>')+'</div>').join("")+
+    S.comp.filter(c=>!live.ais[c.mmsi]).map(c=>'<div class="arow"><span><b>'+esc(c.name||"—")+'</b> · '+esc(c.mmsi)+' · nav redzams</span><button class="small danger" data-rm="'+esc(c.mmsi)+'">Noņemt</button></div>').join("");
+  const L=$("aisList");if(L.dataset.h!==lh){L.innerHTML=lh||'<p class="note">AIS mērķu nav.</p>';L.dataset.h=lh}
+  drawAis()}
+$("aisList").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.add&&S.comp.length<3){const a=live.ais[b.dataset.add];S.comp.push({mmsi:b.dataset.add,name:a&&a.name||""});if(a){a.leg=S.leg;a.gaps=[]}}
+  else if(b.dataset.rm)S.comp=S.comp.filter(c=>c.mmsi!==b.dataset.rm);save();$("aisList").dataset.h="";renderAis()});
+$("bCompAdd").onclick=()=>{const m=String($("cMmsi").value).replace(/\D/g,"");if(m.length<7){$("compMsg").textContent="MMSI ir 9 cipari.";return}
+  if(S.comp.length>=3){$("compMsg").textContent="Var sekot ne vairāk kā 3 konkurentiem — vispirms noņem kādu.";return}
+  if(!S.comp.some(c=>c.mmsi===m))S.comp.push({mmsi:m,name:$("cName").value.trim()});save();$("cMmsi").value="";$("cName").value="";$("aisList").dataset.h="";renderAis()};
+const COMP_COL=["#e8590c","#7048e8","#0c8599"];
+function drawAis(){const cv=$("aisCv"),dpr=window.devicePixelRatio||1,W_=cv.clientWidth,H=cv.clientHeight;if(!W_)return;
+  cv.width=W_*dpr;cv.height=H*dpr;const g=cv.getContext("2d");g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W_,H);
+  const me=pos();if(!me)return;const pts=[{x:0,y:0}];const m=item(S.leg);if(m)pts.push(xy(centerPt(m),me));
+  S.comp.forEach(c=>{const a=live.ais[c.mmsi];if(a&&a.lat!=null)pts.push(xy({lat:a.lat,lon:a.lon},me))});
+  let mnx=Math.min(...pts.map(a=>a.x)),mxx=Math.max(...pts.map(a=>a.x)),mny=Math.min(...pts.map(a=>a.y)),mxy=Math.max(...pts.map(a=>a.y));
+  const span=Math.max(mxx-mnx,mxy-mny,300)*1.25,cx=(mnx+mxx)/2,cy=(mny+mxy)/2,sc=Math.min(W_,H)/span,P=a=>[W_/2+(a.x-cx)*sc,H/2-(a.y-cy)*sc];
+  g.strokeStyle=css("--line");g.lineWidth=1;g.beginPath();for(let i=1;i<4;i++){g.moveTo(W_*i/4,0);g.lineTo(W_*i/4,H);g.moveTo(0,H*i/4);g.lineTo(W_,H*i/4)}g.stroke();
+  if(m){itemPts(m).forEach(q=>{const [x,y]=P(xy(q,me));g.fillStyle=css("--warn");g.beginPath();g.arc(x,y,6,0,7);g.fill()});const [x,y]=P(xy(centerPt(m),me));g.fillStyle=css("--fg");g.font="600 12px "+css("--f-body");g.fillText(m.name,x+9,y+4)}
+  const boat=(q,h,col,label,trk)=>{if(trk&&trk.length>1){g.strokeStyle=col;g.globalAlpha=.5;g.lineWidth=1.5;g.beginPath();trk.forEach((t,i)=>{const [x,y]=P(xy(t,me));i?g.lineTo(x,y):g.moveTo(x,y)});g.stroke();g.globalAlpha=1}
+    const [x,y]=P(q);g.save();g.translate(x,y);g.rotate((h||0)*D2R);g.fillStyle=col;g.beginPath();g.moveTo(0,-10);g.lineTo(6,8);g.lineTo(-6,8);g.closePath();g.fill();g.restore();
+    g.fillStyle=col;g.font="600 12px "+css("--f-body");g.fillText(label,x+9,y-6)};
+  S.comp.forEach((c,i)=>{const a=live.ais[c.mmsi];if(a&&a.lat!=null)boat(xy({lat:a.lat,lon:a.lon},me),a.cog,COMP_COL[i],c.name||a.name||c.mmsi,a.hist.slice(-36))});
+  const v=velocity();boat({x:0,y:0},v&&len(v)>.3?brg(v):0,css("--fg"),"Es",live.track.slice(-60));
+  g.fillStyle=css("--muted");g.font="11px "+css("--f-num");g.fillText("N↑  "+dist(span/4).replace(" ","\u00a0")+" / rūtiņa",8,H-8)}
+
+/* ---------- loop ---------- */
+let lastCore=0;
+function frame(){const now=Date.now();seqTick(now);renderStatus();renderStart(now);if(now-lastCore>=1000){lastCore=now;tackTick(now);recTick(now)}
+  renderInst()}
+setInterval(frame,200);
+setInterval(()=>{if(has("orc"))perfTick();else live.perf=null;renderMark();drawPlot();renderAis();if(!$("p-log").hidden&&REC.on)$("recState").textContent="● Ieraksts notiek: "+hms(Date.now()-REC.start)+" · "+REC.pts.length+" punkti · "+TK.count+" halzes";$("skStat").textContent="Statuss: "+skState},1000);
+window.addEventListener("resize",drawPlot);
+
+/* ---------- boot ---------- */
+const had=load();
+if(!had){S.sim=true;loadSample()}
+["a","cb","pin"].forEach(llWire);if(S.skOn&&(has("instr")||has("ais")))skConnect();applyLocks();dbOpen().then(async()=>{const all=await dbAll();for(const o of all)if(o.status==="recording"){o.status="pārtraukts";await dbPut(o)}});fillSettings();idleLabels();renderLog();renderCourseEditor();methUI();applySource();frame();renderMark();setScreen(S.scr||0);
+})();
+</script>
+</body></html>
