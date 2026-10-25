@@ -1,0 +1,49 @@
+name: Android APK
+
+on:
+  push:
+    branches: [main]
+    paths: ["index.html", "mobile/**", ".github/workflows/android.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Web saturs un Capacitor sinhronizācija
+        working-directory: mobile
+        run: |
+          npm ci
+          cp ../index.html www/index.html
+          npx cap sync android
+      - name: Būvē APK
+        working-directory: mobile/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+          cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/regates-asistents.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: regates-asistents-apk
+          path: regates-asistents.apk
+      - name: Publicē lejupielādei (android-latest)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VER=$(grep -o '"v":"[^"]*"' version.json | cut -d'"' -f4)
+          gh release delete android-latest -y --cleanup-tag || true
+          gh release create android-latest regates-asistents.apk \
+            --title "Regates asistents Android ($VER)" \
+            --notes "Testa versija Android planšetei. Lejupielādē regates-asistents.apk planšetē un atver. Versija: $VER" \
+            --prerelease

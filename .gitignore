@@ -4,3 +4,7 @@ mobile/ios/App/Pods/
 mobile/android/.gradle/
 mobile/android/app/build/
 .DS_Store
+mobile/android/.idea/
+mobile/android/local.properties
+mobile/android/build/
+mobile/android/capacitor-cordova-android-plugins/build/
