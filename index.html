@@ -611,12 +611,12 @@ function tackTick(now){const h=hdgNow();if(h==null)return;TK.hist.push({t:now,h}
   const a=meanH(now-5000,now),b=meanH(now-25000,now-15000);
   if(a&&b&&Math.abs(diff(a.m,b.m))>60&&now-TK.lastTack>30000){TK.lastTack=now;TK.side=TK.side==="A"?"B":"A";TK.pending=now;TK.count++;recEvent("halze",{no:TK.count});beep(false)}
   const v_=velocity(),slow=!v_||len(v_)<2.5;/* < ~5 kn: GPS COG noisier → looser limits */
-  if(TK.pending&&now-TK.pending>15000){const m=meanH(now-10000,now);if(m&&m.sd<(slow?14:8)){TK.refs[TK.side]=m.m;TK.pending=null}}
-  if(TK.refs[TK.side]==null&&!TK.pending){const m=meanH(now-20000,now);if(m&&m.sd<(slow?12:6)&&TK.hist.length>15)TK.refs[TK.side]=m.m}}
+  if(TK.pending&&now-TK.pending>10000){const m=meanH(now-8000,now);if(m&&m.sd<(slow?14:8)){TK.refs[TK.side]=m.m;TK.pending=null}}
+  if(TK.refs[TK.side]==null&&!TK.pending){const m=meanH(now-10000,now);if(m&&m.sd<(slow?12:6)&&TK.hist.length>8)TK.refs[TK.side]=m.m}}
 /* manual reference: tap the bar */
 function tackSetRef(){const now=Date.now(),m=meanH(now-5000,now),h=m?m.m:hdgNow();if(h==null){addLog("Atskaites kursu nevar iestatīt — kustība par lēnu");return false}
   TK.refs[TK.side]=h;TK.pending=null;beep(true);addLog("Atskaites kurss iestatīts: "+Math.round(h)+"°");return true}
-function tackStatus(){if(hdgNow()==null)return"kustība par lēnu (> 1 kn)";if(TK.pending)return"pēc halzes nosaka jauno kursu…";if(TK.refs[TK.side]==null)return"turi kursu ~20 s vai pieskaries joslai";return null}
+function tackStatus(){if(hdgNow()==null)return"kustība par lēnu (> 1 kn)";if(TK.pending)return"pēc halzes nosaka jauno kursu…";if(TK.refs[TK.side]==null)return"turi kursu ~10 s vai pieskaries joslai";return null}
 /* returns {dev: degrees turned right(+)/left(−) from this tack's reference, lift: + lift / − header when wind side is known} */
 function tackShift(){const h=hdgNow(),ref=TK.refs[TK.side];if(h==null||ref==null)return null;const dev=diff(h,ref);
   let w=twd()?twd().v:null;
@@ -1349,7 +1349,7 @@ const had=load();
 if(!had){S.sim=true;loadSample()}
 /* ---------- versijas pārbaude (GitHub Pages) ---------- */
 document.querySelector(".ibar").addEventListener("click",()=>{const sc=SCREENS[S.scr];if(!sc||!sc.bar)return;const b=typeof sc.bar==="function"?sc.bar():sc.bar;if(b==="shift"&&!(has("orc")&&has("course")&&markCalc&&markCalc.type))tackSetRef()});
-const APP_VER="2026-10-25.2";let updInfo=null;
+const APP_VER="2026-10-25.3";let updInfo=null;
 function updOk(){return location.protocol==="https:"&&/\.github\.io$/.test(location.hostname)}
 function showUpd(){const on=!!updInfo&&!REC.on;$("updBar").hidden=!on;if(on)$("updTxt").textContent="Jauna versija "+updInfo.v+(updInfo.note?" — "+updInfo.note:"")}
 function checkUpd(){if(!updOk())return;fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{if(j&&j.v&&j.v!==APP_VER){updInfo=j;showUpd()}}).catch(()=>{})}
