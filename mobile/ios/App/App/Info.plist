@@ -26,6 +26,8 @@
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Regates asistents izmanto atrašanās vietu starta līnijai, ātrumam, kursam un brauciena ierakstam.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>Regates asistents izmanto kustības sensorus laivas sasvēruma un garensvēres mērīšanai, ja telefons ir nostiprināts.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
