@@ -1406,11 +1406,14 @@ $("bCompCal").onclick=()=>{const v=velocity();if(!S.mounted||SEN.hdgRaw==null){$
 setInterval(()=>{if(!$("p-set").hidden)$("mountStat").textContent=mountStatus()},1000);
 if(S.mounted)senListen();
 document.querySelector(".ibar").addEventListener("click",()=>{const sc=SCREENS[S.scr];if(!sc||!sc.bar)return;const b=typeof sc.bar==="function"?sc.bar():sc.bar;if(b==="shift"&&!(has("orc")&&has("course")&&markCalc&&markCalc.type))tackSetRef()});
-const APP_VER="2026-10-25.6";let updInfo=null;
-function updOk(){return location.protocol==="https:"&&/\.github\.io$/.test(location.hostname)}
-function showUpd(){const on=!!updInfo&&!REC.on;$("updBar").hidden=!on;if(on)$("updTxt").textContent="Jauna versija "+updInfo.v+(updInfo.note?" — "+updInfo.note:"")}
-function checkUpd(){if(!updOk())return;fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{if(j&&j.v&&j.v!==APP_VER){updInfo=j;showUpd()}}).catch(()=>{})}
-$("updBtn").onclick=()=>{if(REC.on){addLog("Atjaunini pēc STOP");return}save();location.replace(location.pathname+"?v="+encodeURIComponent(updInfo?updInfo.v:Date.now()))};
+const APP_VER="2026-10-25.7";let updInfo=null;
+const PAGES="https://artursnorigas-arch.github.io/regates-asistents/",APK_URL="https://github.com/artursnorigas-arch/regates-asistents/releases/download/android-latest/regates-asistents.apk";
+function isNative(){const C=window.Capacitor;return!!(C&&C.isNativePlatform&&C.isNativePlatform())}
+function natPlat(){const C=window.Capacitor;return C&&C.getPlatform?C.getPlatform():""}
+function updOk(){return isNative()||(location.protocol==="https:"&&/\.github\.io$/.test(location.hostname))}
+function showUpd(){const on=!!updInfo&&!REC.on;$("updBar").hidden=!on;if(on){$("updTxt").textContent="Jauna versija "+updInfo.v+(updInfo.note?" — "+updInfo.note:"")+(isNative()?(natPlat()==="android"?" (lejupielādē jauno lietotni)":" (atjaunini caur Mac)"):"");$("updBtn").hidden=isNative()&&natPlat()!=="android";$("updBtn").textContent=isNative()?"Lejupielādēt":"Atjaunināt"}}
+function checkUpd(){if(!updOk())return;fetch((isNative()?PAGES:"")+"version.json?t="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{if(j&&j.v&&j.v!==APP_VER){updInfo=j;showUpd()}}).catch(()=>{})}
+$("updBtn").onclick=()=>{if(REC.on){addLog("Atjaunini pēc STOP");return}save();if(isNative()){location.href=APK_URL;return}location.replace(location.pathname+"?v="+encodeURIComponent(updInfo?updInfo.v:Date.now()))};
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkUpd()});
 setInterval(()=>{checkUpd();showUpd()},5*60*1000);setTimeout(checkUpd,3000);
 $("verTxt").textContent="Versija "+APP_VER+(updOk()?" · atjauninājumi tiek pārbaudīti automātiski":"");
