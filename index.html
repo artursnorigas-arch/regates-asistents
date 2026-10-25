@@ -423,6 +423,14 @@ details summary{cursor:pointer;font-weight:600;padding-block:6px}
       <button id="bCoords">Saglabāt koordinātas</button>
     </div>
     <div class="card">
+      <h2>Telefona nostiprināšana</h2>
+      <label class="check"><input type="checkbox" id="sMount">Telefons ir nekustīgi nostiprināts uz laivas</label>
+      <p class="note">Bez nostiprināta telefona attālums līdz starta līnijai var kļūdīties līdz laivas garumam, un sasvērums, garensvēre un kompass netiek mērīti. Ja telefons nav nostiprināts, atbildība par rādījumu izmantošanu ir lietotājam.</p>
+      <label>Kā telefons novietots<select id="sMountOri"><option value="vert">Vertikāli, ekrāns pret pakaļgalu</option><option value="flat">Guļus, augšmala pret priekšgalu</option></select></label>
+      <div class="row"><button class="small" id="bZero">Nulle — laiva stāv taisni</button><button class="small" id="bCompCal">Kompass = GPS kurss</button></div>
+      <p class="note" id="mountStat">–</p>
+    </div>
+    <div class="card">
       <h2>Ekrāns</h2>
       <label class="check"><input type="checkbox" id="sDay">Dienas režīms (melns uz balta)</label>
       <div class="grid three">
@@ -638,8 +646,8 @@ function recStart(t){if(REC.on)return;REC.on=true;REC.start=t||Date.now();REC.id
 function sessObj(status){return{id:REC.id,start:REC.start,end:Date.now(),status,boat:(S.polar&&S.polar.name)||"",course:S.order.slice(),pts:REC.pts,ev:REC.ev}}
 function recSaveDraft(){if(REC.on)dbPut(sessObj("recording"))}
 async function recStop(reason){if(!REC.on)return;REC.ev.push({t:Date.now(),e:reason||"stop"});const o=sessObj("done");REC.on=false;await dbPut(o);addLog("Brauciens saglabāts ("+hms(o.end-o.start)+")");selSess=o.id;if(!$("p-log").hidden)renderLogTab()}
-function recTick(now){if(!REC.on)return;const p=pos();if(!p||now-REC.last<1000)return;REC.last=now;const v=velocity(),sh=tackShift(),w=twd();
-  REC.pts.push({t:now,lat:+p.lat.toFixed(6),lon:+p.lon.toFixed(6),sog:v?+(len(v)/KN).toFixed(2):null,cog:v&&len(v)>.3?Math.round(brg(v)):null,dev:sh?Math.round(sh.dev):null,lift:sh&&sh.lift!=null?Math.round(sh.lift):null,twd:w?Math.round(w.v):null,tack:TK.side})}
+function recTick(now){let hp_,c_;if(!REC.on)return;const p=pos();if(!p||now-REC.last<1000)return;REC.last=now;const v=velocity(),sh=tackShift(),w=twd();
+  REC.pts.push({t:now,lat:+p.lat.toFixed(6),lon:+p.lon.toFixed(6),sog:v?+(len(v)/KN).toFixed(2):null,cog:v&&len(v)>.3?Math.round(brg(v)):null,dev:sh?Math.round(sh.dev):null,lift:sh&&sh.lift!=null?Math.round(sh.lift):null,twd:w?Math.round(w.v):null,tack:TK.side,heel:(hp_=heelPitch())?Math.round(hp_.heel):null,pitch:hp_?Math.round(hp_.pitch):null,comp:(c_=compassNow())!=null?Math.round(c_):null,mnt:S.mounted?1:0})}
 setInterval(recSaveDraft,30000);
 let stopArmI=0;
 $("iStop").onclick=()=>{const n=Date.now();if(n-stopArmI>3000){stopArmI=n;$("iStop").textContent="APSTIPRINĀT";setTimeout(()=>$("iStop").textContent="STOP",3000);return}recStop("stop");$("iStop").textContent="STOP"};
@@ -668,7 +676,7 @@ function drawSess(o){const cv=$("sessCv"),dpr=window.devicePixelRatio||1,W_=cv.c
   for(let i=1;i<Q.length;i++){const f=(P[i].sog||0)/mx;g.strokeStyle="hsl("+Math.round(220-200*f)+",70%,50%)";g.beginPath();g.moveTo(...Pp(Q[i-1]));g.lineTo(...Pp(Q[i]));g.stroke()}
   o.ev.filter(e=>e.e==="halze").forEach(e=>{const k=P.findIndex(x=>x.t>=e.t);if(k<0)return;const [x,y]=Pp(Q[k]);g.fillStyle=css("--fg");g.beginPath();g.arc(x,y,3.5,0,7);g.fill()});
   g.fillStyle=css("--muted");g.font="11px "+css("--f-num");g.fillText("Krāsa: ātrums (zils lēni → sarkans ātri) · punkti: halzes",8,H-8)}
-function toCSV(o){const h="laiks_utc,lat,lon,sog_kn,cog_deg,novirze_no_halzes_deg,lift_deg,twd_deg,halze";return h+"\n"+o.pts.map(x=>[new Date(x.t).toISOString(),x.lat,x.lon,x.sog??"",x.cog??"",x.dev??"",x.lift??"",x.twd??"",x.tack].join(",")).join("\n")+"\n"}
+function toCSV(o){const h="laiks_utc,lat,lon,sog_kn,cog_deg,novirze_no_halzes_deg,lift_deg,twd_deg,halze,sasverums_deg,garensvere_deg,kompass_deg,telefons_nostiprinats";return h+"\n"+o.pts.map(x=>[new Date(x.t).toISOString(),x.lat,x.lon,x.sog??"",x.cog??"",x.dev??"",x.lift??"",x.twd??"",x.tack,x.heel??"",x.pitch??"",x.comp??"",x.mnt??""].join(",")).join("\n")+"\n"}
 function toGPX(o){const pt=o.pts.filter(x=>x.lat!=null).map(x=>'<trkpt lat="'+x.lat+'" lon="'+x.lon+'"><time>'+new Date(x.t).toISOString()+'</time>'+(x.sog!=null?'<extensions><speed>'+(x.sog*KN).toFixed(2)+'</speed>'+(x.cog!=null?'<course>'+x.cog+'</course>':'')+'</extensions>':'')+'</trkpt>').join("\n");
   return'<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Regates asistents" xmlns="http://www.topografix.com/GPX/1/1">\n<trk><name>'+new Date(o.start).toISOString()+'</name><trkseg>\n'+pt+'\n</trkseg></trk>\n</gpx>\n'}
 async function exportFile(name,text,mime){const msg=$("expMsg");
@@ -950,7 +958,7 @@ function polTable(){const P=S.polar,t=$("polTbl");const row=(h,a,f)=>"<tr><td>"+
   t.innerHTML=h;$("polNote").textContent=(fullP()===P?"Pilna polāru tabula — rēķina augšvēju, sānvēju un pa vējam. ":"Uzmanību: šai jahtai ielasītas tikai augšvēja rindas — sānvējam un pa vējam izmanto Gabriel datus. ")+"Starp TWS un TWA vērtībām interpolē lineāri. Straume „uz” — virziens, uz kuru tā plūst."}
 function fillInstSettings(){const opts=Object.entries(METRICS).map(([k,m])=>'<option value="'+k+'">'+m.l+'</option>').join("");
   if(!$("sC1").options.length){$("sC1").innerHTML=opts;$("sC2").innerHTML=opts}
-  $("sC1").value=S.c1;$("sC2").value=S.c2;$("sCB").value=S.cbar;$("sDay").checked=!!S.day;$("sBow").value=S.bow||0}
+  $("sMount").checked=!!S.mounted;$("sMountOri").value=S.mountOri||"vert";$("sC1").value=S.c1;$("sC2").value=S.c2;$("sCB").value=S.cbar;$("sDay").checked=!!S.day;$("sBow").value=S.bow||0}
 $("bInstSave").onclick=()=>{S.c1=$("sC1").value;S.c2=$("sC2").value;S.cbar=$("sCB").value;S.day=$("sDay").checked;
   const b=parseFloat(String($("sBow").value).replace(",","."));S.bow=isFinite(b)?Math.max(0,Math.min(15,b)):0;save();$("setMsg").textContent="Ekrāna iestatījumi saglabāti."};
 function fillSettings(){fillInstSettings();$("sLic").value=S.license;$("sSkUrl").value=S.skUrl||"";$("sSkOn").checked=!!S.skOn;$("sLay").value=S.laySrc;$("sTws").value=S.tws;$("sLee").value=S.leeway;$("sTwsK").value=dec(S.twsK||1,2);$("sPolName").value=S.polar.name||"";$("sCurSet").value=Math.round(S.curSet);$("sCurKn").value=S.curKn;polTable();$("sType").value=S.seq.type;$("sN").value=String(S.seq.n);$("sPrep").value=S.seq.prep;$("sLoss").value=S.loss;
@@ -1162,7 +1170,7 @@ function drawPlot(){const cv=$("plot");if($("p-mark").hidden)return;const dpr=wi
 let CLK={clock:"5:00",urgent:false,remain:null,idle:true,after:null};
 function lineNow(){/* signed distance to line from the bow (+ = course side), velocity toward course side, from pin-left / RC-right convention */
   const p=pos();if(!p||!S.cb||!S.pin)return null;const o=S.pin,C=xy(S.cb,o),L=len(C);if(L<1)return null;const n={x:-C.y/L,y:C.x/L};
-  const v=velocity();let bowV=null;if(v&&len(v)>.3)bowV=vec(brg(v),S.bow||0);
+  const v=velocity();let bowV=null;if(v&&len(v)>.3&&S.mounted)bowV=vec(brg(v),S.bow||0);
   let B=xy(p,o);if(bowV)B=add(B,bowV);const d=dot(B,n),vn=v?dot(v,n):0;return{d,vn}}
 function shiftNow(){if(!(has("orc")&&has("course")&&markCalc&&markCalc.type)){const t=tackShift();return t?(t.lift!=null?t.lift:t.dev):null}const v=velocity(),w=twd();if(!v||len(v)<.5||!w)return null;const L=liveWind();
   if(L&&L.uF&&L.uL&&S.twdSrc!=="manual"){const I=live.inst;if(!I||I.twa==null||Math.abs(I.twa)>=90)return null;if(Date.now()-L.since<120000)return null;
@@ -1171,8 +1179,11 @@ function shiftNow(){if(!(has("orc")&&has("course")&&markCalc&&markCalc.type)){co
   if(S.laySrc==="orc"){const tg=target(TWS());ref=tg.ang+(S.leeway||0)}else{const T=S.tacks,t=st?T.S:T.P;if(!t)return null;ref=Math.abs(diff(t.cog,w.v))}
   return ref-Math.abs(diff(brg(v),w.v))/* + lift, − header */}
 const METRICS={
+  heel:{l:"Sasvērums",f:()=>{const h=heelPitch();return h?{t:Math.round(Math.abs(h.heel))+"°"+(h.heel>=0?"L":"K")}:{t:"–"}}},
+  pitch:{l:"Garensvēre",f:()=>{const h=heelPitch();return h?{t:(h.pitch>0?"+":"")+Math.round(h.pitch)+"°"}:{t:"–"}}},
+  comp:{l:"Kompass (telefons)",f:()=>{const c=compassNow();return{t:c!=null?deg(c):"–"}}},
   timer:{l:"Taimeris",f:()=>({t:CLK.clock,c:CLK.urgent?"red":""})},
-  line:{l:"Līdz līnijai, m",f:()=>{const L=lineNow();if(!L)return{t:S.cb&&S.pin?"–":"---"};const r=CLK.remain;return{t:(L.d>0?"+":"")+String(Math.abs(L.d)<100?L.d.toFixed(1):Math.round(L.d)).replace(".",","),c:L.d>0&&r!=null?"red":""}}},
+  line:{l:"Līdz līnijai, m",lf:()=>S.mounted?"Līdz līnijai, m":"Līdz līnijai, m · telefons nav nostiprināts",f:()=>{const L=lineNow();if(!L)return{t:S.cb&&S.pin?"–":"---"};const r=CLK.remain;return{t:(L.d>0?"+":"")+String(Math.abs(L.d)<100?L.d.toFixed(1):Math.round(L.d)).replace(".",","),c:L.d>0&&r!=null?"red":""}}},
   burn:{l:"Rezerve",f:()=>{const L=lineNow(),r=CLK.remain;if(!L||r==null||L.d>=0||L.vn<=.2)return{t:"–"};const b=r-(-L.d/L.vn*1000);return{t:mmss(b,true),c:b<0?"red":b<10000?"amb":"grn"}}},
   sog:{l:"SOG, kn",f:()=>{const v=velocity();return{t:v?dec(len(v)/KN,1):"–"}}},
   cog:{l:"COG",f:()=>{const v=velocity();return{t:v&&len(v)>.3?deg(brg(v)):"–"}}},
@@ -1355,8 +1366,34 @@ window.addEventListener("resize",drawPlot);
 const had=load();
 if(!had){S.sim=true;loadSample()}
 /* ---------- versijas pārbaude (GitHub Pages) ---------- */
+/* ---------- phone sensors (only when mounted) ---------- */
+const SEN={g:null,hdgRaw:null,on:false,tg:0,th:0};
+function senListen(){if(SEN.on)return;SEN.on=true;
+  window.addEventListener("devicemotion",e=>{const a=e.accelerationIncludingGravity;if(!a||a.x==null)return;const v={x:a.x,y:a.y,z:a.z};SEN.g=SEN.g?{x:SEN.g.x*.9+v.x*.1,y:SEN.g.y*.9+v.y*.1,z:SEN.g.z*.9+v.z*.1}:v;SEN.tg=Date.now()});
+  const ori=e=>{let h=null;if(e.webkitCompassHeading!=null)h=e.webkitCompassHeading;else if(e.absolute&&e.alpha!=null)h=360-e.alpha;if(h!=null&&isFinite(h)){SEN.hdgRaw=wrap360(h);SEN.th=Date.now()}};
+  window.addEventListener("deviceorientationabsolute",ori);window.addEventListener("deviceorientation",ori)}
+async function senStart(){try{if(typeof DeviceMotionEvent!=="undefined"&&typeof DeviceMotionEvent.requestPermission==="function"){const r=await DeviceMotionEvent.requestPermission();if(r==="denied"){addLog("Kustības sensoru atļauja liegta");return false}}
+  if(typeof DeviceOrientationEvent!=="undefined"&&typeof DeviceOrientationEvent.requestPermission==="function"){try{await DeviceOrientationEvent.requestPermission()}catch(e){}}}catch(e){}senListen();return true}
+function senAxes(){const ori=(S.zero&&S.zero.ori)||S.mountOri||"vert";return{exp:ori==="flat"?{x:0,y:0,z:-1}:{x:0,y:-1,z:0},f:ori==="flat"?{x:0,y:1,z:0}:{x:0,y:0,z:-1}}}
+function senDown(sgn){const g=SEN.g;if(!g||Date.now()-SEN.tg>3000)return null;const n=Math.hypot(g.x,g.y,g.z);if(n<5)return null;return{x:sgn*g.x/n,y:sgn*g.y/n,z:sgn*g.z/n}}
+const asinD=x=>Math.asin(Math.max(-1,Math.min(1,x)))/D2R;
+function heelPitch(){if(!S.mounted||!S.zero)return null;const d=senDown(S.zero.s);if(!d)return null;const A=senAxes();
+  return{heel:asinD(d.x)-S.zero.h,pitch:asinD(d.x*A.f.x+d.y*A.f.y+d.z*A.f.z)-S.zero.p}}/* heel + = labais borts uz leju; pitch + = priekšgals uz leju */
+function compassNow(){if(!S.mounted||SEN.hdgRaw==null||Date.now()-SEN.th>3000)return null;return wrap360(SEN.hdgRaw+(S.compOff||0))}
+function mountStatus(){if(!S.mounted)return"Nav atzīmēts, ka telefons nostiprināts — sensori izslēgti, priekšgala nobīde netiek ņemta vērā.";
+  if(!SEN.g)return"Gaida kustības sensoru datus… (iPhone var prasīt atļauju)";if(!S.zero)return"Nospied „Nulle”, kad laiva stāv taisni pie piestātnes.";
+  const hp=heelPitch(),c=compassNow();return"Sasvērums "+(hp?Math.round(Math.abs(hp.heel))+"° "+(hp.heel>=0?"L":"K"):"–")+" · garensvēre "+(hp?(hp.pitch>0?"+":"")+Math.round(hp.pitch)+"°":"–")+" · kompass "+(c!=null?deg(c):"–")+(S.compOff==null?" (nav kalibrēts pret GPS)":"")}
+$("sMount").onchange=async e=>{S.mounted=e.target.checked;if(S.mounted)await senStart();recEvent("nostiprinats",{v:S.mounted});save();$("mountStat").textContent=mountStatus()};
+$("sMountOri").onchange=e=>{S.mountOri=e.target.value;S.zero=null;save();$("mountStat").textContent=mountStatus()};
+$("bZero").onclick=async()=>{if(!S.mounted){$("mountStat").textContent="Vispirms atzīmē, ka telefons nostiprināts.";return}await senStart();
+  setTimeout(()=>{const g=SEN.g;if(!g){$("mountStat").textContent="Nav kustības sensoru datu — pārbaudi atļauju.";return}const A=senAxes(),n=Math.hypot(g.x,g.y,g.z),dp=(g.x*A.exp.x+g.y*A.exp.y+g.z*A.exp.z)/n,sg=dp>=0?1:-1,d=senDown(sg);
+    S.zero={s:sg,h:asinD(d.x),p:asinD(d.x*A.f.x+d.y*A.f.y+d.z*A.f.z),ori:S.mountOri||"vert",t:Date.now()};save();endTone(true);addLog("Sasvēruma nulle iestatīta");$("mountStat").textContent=mountStatus()},700)};
+$("bCompCal").onclick=()=>{const v=velocity();if(!S.mounted||SEN.hdgRaw==null){$("mountStat").textContent="Kompasa dati nav pieejami (telefons nav atzīmēts kā nostiprināts vai nav atļaujas).";return}
+  if(!v||len(v)<1.5){$("mountStat").textContent="Kalibrē braucot taisni ar vismaz 3 mezgliem, bez straumes.";return}S.compOff=diff(brg(v),SEN.hdgRaw);save();endTone(true);addLog("Kompass kalibrēts pret GPS kursu");$("mountStat").textContent=mountStatus()};
+setInterval(()=>{if(!$("p-set").hidden)$("mountStat").textContent=mountStatus()},1000);
+if(S.mounted)senListen();
 document.querySelector(".ibar").addEventListener("click",()=>{const sc=SCREENS[S.scr];if(!sc||!sc.bar)return;const b=typeof sc.bar==="function"?sc.bar():sc.bar;if(b==="shift"&&!(has("orc")&&has("course")&&markCalc&&markCalc.type))tackSetRef()});
-const APP_VER="2026-10-25.4";let updInfo=null;
+const APP_VER="2026-10-25.5";let updInfo=null;
 function updOk(){return location.protocol==="https:"&&/\.github\.io$/.test(location.hostname)}
 function showUpd(){const on=!!updInfo&&!REC.on;$("updBar").hidden=!on;if(on)$("updTxt").textContent="Jauna versija "+updInfo.v+(updInfo.note?" — "+updInfo.note:"")}
 function checkUpd(){if(!updOk())return;fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{if(j&&j.v&&j.v!==APP_VER){updInfo=j;showUpd()}}).catch(()=>{})}
