@@ -92,6 +92,7 @@ textarea{font:inherit;font-size:14px;color:var(--fg);background:var(--bg);border
 .ibtns{display:grid;grid-template-columns:1fr 1.3fr 1fr;gap:8px}
 .ibtns button{background:var(--i-btn);color:var(--i-fg);border:1px solid var(--i-seg);min-height:62px;font-family:var(--f-num);font-size:22px;letter-spacing:.08em}
 .ibtns button.set{border-color:var(--i-grn);color:var(--i-grn)}
+#iPin,#iRC{color:var(--i-mut);border-color:var(--i-seg)}#iPin.set,#iRC.set{background:var(--i-grn);border-color:var(--i-grn);color:#000;font-weight:800}#iPin.flash,#iRC.flash{outline:4px solid var(--i-fg);outline-offset:2px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{flex:0 0 auto;min-height:38px;padding:4px 12px;font-family:var(--f-num);font-size:17px;font-weight:700}
 .chip.done{opacity:.45}.chip.cur{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
@@ -875,8 +876,14 @@ $("bX").onclick=()=>{const q=S.seq,now=Date.now();
   const st=starts();let last=null,next=null;st.forEach(s=>{if(s<=now)last=s;else if(next==null)next=s});
   if(!q.running||last==null||now-last>4*MIN){addLog("X lieto tikai pirmajās 4 min pēc starta");return}
   let u=last+4*MIN;if(next!=null)u=Math.min(u,next-MIN);q.xUntil=u;sound("1");save();addLog("X pacelts — individuālā atsaukšana (1 signāls)")};
-$("bCB").onclick=()=>{const p=pos();if(!p)return;S.cb={lat:p.lat,lon:p.lon};syncStart();save();addLog("Komitejas gals saglabāts")};
-$("bPin").onclick=()=>{const p=pos();if(!p)return;S.pin={lat:p.lat,lon:p.lon};syncStart();save();addLog("Pin gals saglabāts")};
+/* line ends: confirmation tone always (independent of beep setting); green only if set in last 12 h */
+function endTone(ok){const c=audio();if(!c)return;const t=c.currentTime;(ok?[[1320,0],[1760,.18]]:[[330,0],[330,.3]]).forEach(([f,d])=>{const o=c.createOscillator(),g=c.createGain();o.frequency.value=f;o.type="square";g.gain.setValueAtTime(.22,t+d);g.gain.exponentialRampToValueAtTime(.001,t+d+.16);o.connect(g);g.connect(c.destination);o.start(t+d);o.stop(t+d+.2)})}
+const END_FRESH=12*3600*1000;function endFresh(k){return!!(S[k]&&S[k+"T"]&&Date.now()-S[k+"T"]<END_FRESH)}
+function setEnd(k,btn,txt){const p=pos();if(!p){endTone(false);addLog("Nav GPS pozīcijas — gals nav saglabāts");return}
+  S[k]={lat:p.lat,lon:p.lon};S[k+"T"]=Date.now();syncStart();save();endTone(true);addLog(txt+" saglabāts");
+  const b=$(btn);if(b){b.classList.add("set","flash");setTimeout(()=>b.classList.remove("flash"),600)}}
+$("bCB").onclick=()=>setEnd("cb","iRC","Komitejas gals (RC)");
+$("bPin").onclick=()=>setEnd("pin","iPin","Pin gals");
 
 /* ---------- buttons: mark ---------- */
 function recordTack(side){const v=velocity(20000);if(!v){$("mMsg").textContent="Vajag vismaz 5 s GPS datu. Pamēģini vēlreiz.";return}
@@ -1230,7 +1237,7 @@ function renderInst(){if($("p-inst").hidden)return;document.querySelector('#inav
   const B=(BARS[val(sc.bar)]||BARS.shift).f();$("iBL").textContent=B.l;$("ends").innerHTML="<span>"+(B.lt||"")+"</span><span>"+(B.rt||"")+"</span>";{const th=B.ticks?B.ticks.map(t=>'<span style="left:'+((10+t/B.step+.5)/21*100).toFixed(2)+'%">'+(t>0?"+":t<0?"−":"")+Math.abs(t)+"</span>").join(""):"";const T=$("ticks");if(T.dataset.h!==th){T.innerHTML=th;T.dataset.h=th}}
   const segs=$("segs").children;const n=B.v==null?0:Math.max(-10,Math.min(10,Math.round(B.v)));
   for(let i=0;i<21;i++){const k=i-10;let cls=i===10?"c":"";if(n<0&&k<0&&k>=n)cls+=B.neutral?" on n":" on l";if(n>0&&k>0&&k<=n)cls+=B.neutral?" on n":" on r";segs[i].className=cls}
-  $("ibtns").hidden=!sc.btns||(S.scr===0&&raceOn());$("startExtras").hidden=S.scr!==0;$("iPin").classList.toggle("set",!!S.pin);$("iRC").classList.toggle("set",!!S.cb);
+  $("ibtns").hidden=!sc.btns||(S.scr===0&&raceOn());$("startExtras").hidden=S.scr!==0;$("iPin").classList.toggle("set",endFresh("pin"));$("iRC").classList.toggle("set",endFresh("cb"));
   $("iGun").textContent=S.seq.running?"SINHR.":"SĀKT"}
 
 /* ---------- SailSteer-style compass ---------- */
@@ -1349,7 +1356,7 @@ const had=load();
 if(!had){S.sim=true;loadSample()}
 /* ---------- versijas pārbaude (GitHub Pages) ---------- */
 document.querySelector(".ibar").addEventListener("click",()=>{const sc=SCREENS[S.scr];if(!sc||!sc.bar)return;const b=typeof sc.bar==="function"?sc.bar():sc.bar;if(b==="shift"&&!(has("orc")&&has("course")&&markCalc&&markCalc.type))tackSetRef()});
-const APP_VER="2026-10-25.3";let updInfo=null;
+const APP_VER="2026-10-25.4";let updInfo=null;
 function updOk(){return location.protocol==="https:"&&/\.github\.io$/.test(location.hostname)}
 function showUpd(){const on=!!updInfo&&!REC.on;$("updBar").hidden=!on;if(on)$("updTxt").textContent="Jauna versija "+updInfo.v+(updInfo.note?" — "+updInfo.note:"")}
 function checkUpd(){if(!updOk())return;fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{if(j&&j.v&&j.v!==APP_VER){updInfo=j;showUpd()}}).catch(()=>{})}
